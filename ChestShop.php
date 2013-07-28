@@ -10,11 +10,11 @@ class=ChestShop
 apiversion=9
 */
 
-define(CHEST_SLOTS, 27);
-
 class ChestShop implements Plugin
 {
 	private $api, $path;
+	
+	const CHEST_SLOTS = 27;
 
 	public function __construct(ServerAPI $api, $server = false)
 	{
@@ -180,7 +180,7 @@ class ChestShop implements Plugin
 		}
 		$chest = $this->api->tile->get(new Position($c->x, $c->y, $c->z, $c->level));
 		$saleNum = 0;
-		for ($i = 0; $i < CHEST_SLOTS; $i++)
+		for ($i = 0; $i < self::CHEST_SLOTS; $i++)
 		{
 			$item = $chest->getSlot($i);
 			if($item->getID() === $shopInfo['productID'])
@@ -200,7 +200,7 @@ class ChestShop implements Plugin
 		$alias = false;
 		$this->api->block->commandHandler($cmd, $params, $issuer, $alias);
 		$tmpNum = $shopInfo['saleNum'];
-		for ($i = 0; $i < CHEST_SLOTS; $i++)
+		for ($i = 0; $i < self::CHEST_SLOTS; $i++)
 		{
 			$item = $chest->getSlot($i);
 			if($item->getID() === $shopInfo['productID'])
