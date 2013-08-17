@@ -171,8 +171,9 @@ class ChestShop implements Plugin
 			}
 		}
 		if ($saleNum < $shopInfo['saleNum']) {
-			$this->api->chat->sendTo(false, "[ChestShop]The stock is not enough.", $username);
+			$this->api->chat->sendTo(false, "[ChestShop]The stock is not enough!", $username);
 			$this->api->chat->sendTo(false, "[ChestShop]Please notify the owner of the lack.", $username);
+			$this->api->chat->sendTo(false, "[ChestShop]The stock of your chest shop is not enough!", $shopInfo['shopOwner']);
 			return;
 		}
 		$cmd = "give";
@@ -205,6 +206,7 @@ class ChestShop implements Plugin
 				'amount' => $shopInfo['price']
 		));
 		$this->api->chat->sendTo(false, "[ChestShop]Completed the transaction.", $username);
+		$this->api->chat->sendTo(false, "[ChestShop]$username purchased your product: " . $shopInfo['price'] . "PM", $shopInfo['shopOwner']);
 		return;
 	}
 
