@@ -3,17 +3,17 @@
 /*
  __PocketMine Plugin__
 name=ChestShop
-description=You can run your chest shop and purchase from others' chest shop.
-version=1.5.2
+description=You can open your chest shop and purchase from others' chest shop.
+version=1.6
 author=MinecrafterJPN
 class=ChestShop
-apiversion=9
+apiversion=10
 */
 
 class ChestShop implements Plugin
 {
-	private $api, $path;
-	
+	private $api, $db;
+
 	const CHEST_SLOTS = 27;
 
 	public function __construct(ServerAPI $api, $server = false)
@@ -23,12 +23,12 @@ class ChestShop implements Plugin
 
 	public function init()
 	{
+		$this->loadDB();
 		$this->api->addHandler("tile.update", array($this, "eventHandler"));
 		$this->api->addHandler("player.block.touch", array($this, "eventHandler"));
-		$this->path = $this->api->plugin->createConfig($this, array());
 	}
 
-	public function eventHandler(&$data, $event)
+	public function eventHandler($data, $event)
 	{
 		switch ($event) {
 			case "tile.update":
@@ -47,83 +47,128 @@ class ChestShop implements Plugin
 					if ($chest === false) break;
 					if (strlen($shopOwner) > 15) $shopOwner = substr($shopOwner, 0, 15);
 
-					$data->data['Text1'] = $shopOwner;
-					$data->data['Text2'] = "Amount:$saleNum";
-					$data->data['Text3'] = "Price:$price";
-
-					$newConfig = array(
-							array(
-									'shopOwner' => $shopOwner,
-									'saleNum' => $saleNum,
-									'price' => $price,
-									'productID' => $productID,
-									'signX' => $data->x,
-									'signY' => $data->y,
-									'signZ' => $data->z,
-									'chestX' => $chest->x,
-									'chestY' => $chest->y,
-									'chestZ' => $chest->z
-							)
-					);
-					$this->overwriteConfig($newConfig);
+					$data->setText($shopOwner, "Amount:$saleNum", "Price:$price", $data->data['Text4']);
+					$this->db->exec("INSERT INTO ChestShop (shopOwner, saleNum, price, productID, signX, signY, signZ, chestX, chestY, chestZ) VALUES ('$shopOwner', $saleNum, $price, $productID, $data->x, $data->y, $data->z, $chest->x, $chest->y, $chest->z)");
 				}
 				break;
 			case "player.block.touch":
-				$tile = $this->api->tile->get(new Position($data['target']->x, $data['target']->y, $data['target']->z, $data['target']->level));
+				$tile = $this->api->tile->get(new Position($data['target']->x, $data['target']->y, $data['target']->z, $data['player']->level));
 				if($tile === false) break;
 				$class = $tile->class;
-				$cfg = $this->api->plugin->readYAML($this->path . "config.yml");
 				switch ($class) {
 					case TILE_SIGN:
 						switch ($data['type']) {
 							case "place":
-								$shopInfo = false;
-								foreach ($cfg as $val) {
-									if ($data['target']->x === $val['signX']
-											and $data['target']->y === $val['signY']
-											and $data['target']->z === $val['signZ']) {
-										$c = $this->getSideChest($data['target']);
-										if ($c === false) break;
-										if ($val['chestX'] === $c->x and $val['chestY'] === $c->y and $val['chestZ'] === $c->z) {
-											$shopInfo = $val;
-											break;
-										}
-									}
-								}
+								$shopInfo = $this->db->query("SELECT * FROM ChestShop WHERE signX = {$data['target']->x} AND signY = {$data['target']->y} AND signZ = {$data['target']->z}")->fetchArray(SQLITE3_ASSOC);
 								if($shopInfo === false) break;
 								if ($shopInfo['shopOwner'] === $data['player']->username) {
 									$this->api->chat->sendTo(false, "[ChestShop]Cannot purchase from your own shop.", $data['player']->username);
 									break;
 								}
-								$this->startTransaction($data['player']->username, $shopInfo, $c);
+								foreach($this->api->plugin->getList() as $plugin) {
+									$tmp[] = $plugin['name'];
+								}
+								if (!in_array("PocketMoney", $tmp)) {
+									$this->api->chat->sendTo(false, "[ChestShop][Error] PocketMoney plugin has not been loaded.", $data['player']->username);
+									console("[ChestShop][Error] PocketMoney plugin has not been loaded.");
+									break;
+								}
+								$buyerMoney = $this->api->dhandle("money.player.get", array('username' => $data['player']->username));
+								if ($buyerMoney === false) break;
+								if ($buyerMoney < $shopInfo['price']) {
+									$this->api->chat->sendTo(false, "[ChestShop]Your money is not enough.", $data['player']->username);
+									break;
+								}
+								$chest = $this->api->tile->get(new Position($shopInfo['chestX'], $shopInfo['chestY'], $shopInfo['chestZ'], $data['player']->level));
+								$saleNum = 0;
+								for ($i = 0; $i < self::CHEST_SLOTS; $i++) {
+									$item = $chest->getSlot($i);
+									if ($item->getID() === $shopInfo['productID']) {
+										$saleNum += $item->count;
+									}
+								}
+								if ($saleNum < $shopInfo['saleNum']) {
+									$this->api->chat->sendTo(false, "[ChestShop] This shop is out of stack!", $data['player']->username);
+									$this->api->chat->sendTo(false, "[ChestShop] Notify the owner", $data['player']->username);
+									$this->api->chat->sendTo(false, "[ChestShop] Your ChestShop is out of stack! Replenish stock!", $shopInfo['shopOwner']);
+									break;
+								}
+								$this->api->block->commandHandler("give", array($data['player']->username, $shopInfo['productID'], $shopInfo['saleNum']), $data['player'], false);
+								$tmpNum = $shopInfo['saleNum'];
+								for ($i = 0; $i < self::CHEST_SLOTS; $i++) {
+									$item = $chest->getSlot($i);
+									if ($item->getID() === $shopInfo['productID']) {
+										if ($item->count <= $tmpNum) {
+											$chest->setSlot($i, BlockAPI::getItem(AIR, 0, 0));
+											$tmpNum -= $item->count;
+										} else {
+											$count = $item->count - $tmpNum;
+											$chest->setSlot($i, BlockAPI::getItem($item->getID(), 0, $count));
+											break;
+										}
+									}
+								}
+								$this->api->dhandle("money.handle", array(
+										'username' => $data['player']->username,
+										'method' => 'grant',
+										'amount' => -$shopInfo['price']
+								));
+								$this->api->dhandle("money.handle", array(
+										'username' => $shopInfo['shopOwner'],
+										'method' => 'grant',
+										'amount' => $shopInfo['price']
+								));
+								$this->api->chat->sendTo(false, "[ChestShop] Completed the transaction.", $data['player']->username);
+								$this->api->chat->sendTo(false, "[ChestShop] {$data['player']->username} purchased your product: {$shopInfo['price']}PM", $shopInfo['shopOwner']);
 								break;
 							case "break":
-								foreach ($cfg as $val) {
-									if ($val['signX'] === $data['target']->x
-											and $val['signY'] === $data['target']->y
-											and $val['signZ'] === $data['target']->z) {
-										if ($val['shopOwner'] !== $data['player']->username) {
-											$this->api->chat->sendTo(false, "[ChestShop]This sign is protected.", $data['player']->username);
-											return false;
-										}
+								$result = $this->db->query("SELECT * FROM ChestShop WHERE signX = {$data['target']->x} AND signY = {$data['target']->y} AND signZ = {$data['target']->z}")->fetchArray(SQLITE3_ASSOC);
+								if ($result !== false) {
+									if ($result['shopOwner'] !== $data['player']->username) {
+										$this->api->chat->sendTo(false, "[ChestShop] This sign has been protected", $data['player']->username);
+										return false;
+									} else {
+										$this->db->exec("DELETE FROM ChestShop WHERE {$data['target']->x} AND signY = {$data['target']->y} AND signZ = {$data['target']->z}");
+										$this->api->chat->sendTo(false, "[ChestShop] Your ChestShop was closed", $data['player']->username);
+										break;
 									}
 								}
 								break;
 						}
 						break;
 					case TILE_CHEST:
-						foreach ($cfg as $val) {
-							if ($val['chestX'] === $data['target']->x
-									and $val['chestY'] === $data['target']->y
-									and $val['chestZ'] === $data['target']->z
-									and $val['shopOwner'] !== $data['player']->username) {
-								$this->api->chat->sendTo(false, "[ChestShop]This chest is protected.", $data['player']->username);
-								return false;
-							}
+						$result = $this->db->query("SELECT * FROM ChestShop WHERE chestX = {$data['target']->x} AND chestY = {$data['target']->y} AND chestZ = {$data['target']->z}")->fetchArray(SQLITE3_ASSOC);
+						if ($result === false) break;
+						if ($result['shopOwner'] !== $data['player']->username) {
+							$this->api->chat->sendTo(false, "[ChestShop]This chest is protected.", $data['player']->username);
+							return false;
+						} else {
+							$this->db->exec("DELETE FROM ChestShop WHERE chestX = {$data['target']->x} AND chestY = {$data['target']->y} AND chestZ = {$data['target']->z}");
+							$this->api->chat->sendTo(false, "[ChestShop] Your ChestShop was closed", $data['player']->username);
 						}
 						break;
 				}
 		}
+	}
+
+	private function loadDB()
+	{
+		$this->db = new SQLite3($this->api->plugin->configPath($this) . "ChestShop.sqlite3");
+		$this->db->exec(
+				"CREATE TABLE IF NOT EXISTS ChestShop(
+				id INTEGER PRIMARY KEY AUTOINCREMENT,
+				shopOwner TEXT NOT NULL,
+				saleNum INTEGER NOT NULL,
+				price INTEGER NOT NULL,
+				productID INTEGER NOT NULL,
+				signX INTEGER NOT NULL,
+				signY INTEGER NOT NULL,
+				signZ INTEGER NOT NULL,
+				chestX INTEGER NOT NULL,
+				chestY INTEGER NOT NULL,
+				chestZ INTEGER NOT NULL
+		)"
+		);
 	}
 
 	private function getSideChest($data)
@@ -147,75 +192,6 @@ class ChestShop implements Plugin
 		if (($id = array_search($tmp, $this->blocks)) !== false) return $id;
 		if (($id = array_search($tmp, $this->items)) !== false) return $id;
 		return false;
-	}
-
-	private function startTransaction($username, $shopInfo, $c)
-	{
-		if (!file_exists("./plugins/PocketMoney/config.yml")) {
-			$this->api->chat->sendTo(false, "[ChestShop][Error]PocketMoney plugin has not been loaded.", $username);
-			console("[ChestShop][Error]PocketMoney plugin has not been loaded.");
-			return;
-		}
-		$buyerMoney = $this->api->dhandle("money.player.get", array('username' => $username));
-		if ($buyerMoney === false) return;
-		if ($buyerMoney < $shopInfo['price']) {
-			$this->api->chat->sendTo(false, "[ChestShop]Your money is not enough.", $username);
-			return;
-		}
-		$chest = $this->api->tile->get(new Position($c->x, $c->y, $c->z, $c->level));
-		$saleNum = 0;
-		for ($i = 0; $i < self::CHEST_SLOTS; $i++) {
-			$item = $chest->getSlot($i);
-			if ($item->getID() === $shopInfo['productID']) {
-				$saleNum += $item->count;
-			}
-		}
-		if ($saleNum < $shopInfo['saleNum']) {
-			$this->api->chat->sendTo(false, "[ChestShop]The stock is not enough!", $username);
-			$this->api->chat->sendTo(false, "[ChestShop]Please notify the owner of the lack.", $username);
-			$this->api->chat->sendTo(false, "[ChestShop]The stock of your chest shop is not enough!", $shopInfo['shopOwner']);
-			return;
-		}
-		$cmd = "give";
-		$params = array($username, $shopInfo['productID'], $shopInfo['saleNum']);
-		$issuer = $this->api->player->get($username);
-		$alias = false;
-		$this->api->block->commandHandler($cmd, $params, $issuer, $alias);
-		$tmpNum = $shopInfo['saleNum'];
-		for ($i = 0; $i < self::CHEST_SLOTS; $i++) {
-			$item = $chest->getSlot($i);
-			if ($item->getID() === $shopInfo['productID']) {
-				if ($item->count <= $tmpNum) {
-					$chest->setSlot($i, BlockAPI::getItem(AIR, 0, 0));
-					$tmpNum -= $item->count;
-				} else {
-					$count = $item->count - $tmpNum;
-					$chest->setSlot($i, BlockAPI::getItem($item->getID(), 0, $count));
-					break;
-				}
-			}
-		}
-		$this->api->dhandle("money.handle", array(
-				'username' => $username,
-				'method' => 'grant',
-				'amount' => -$shopInfo['price']
-		));
-		$this->api->dhandle("money.handle", array(
-				'username' => $shopInfo['shopOwner'],
-				'method' => 'grant',
-				'amount' => $shopInfo['price']
-		));
-		$this->api->chat->sendTo(false, "[ChestShop]Completed the transaction.", $username);
-		$this->api->chat->sendTo(false, "[ChestShop]$username purchased your product: " . $shopInfo['price'] . "PM", $shopInfo['shopOwner']);
-		return;
-	}
-
-	private function overwriteConfig($dat)
-	{
-		$cfg = array();
-		$cfg = $this->api->plugin->readYAML($this->path . "config.yml");
-		$result = array_merge($cfg, $dat);
-		$this->api->plugin->writeYAML($this->path."config.yml", $result);
 	}
 
 	public function __destruct()
