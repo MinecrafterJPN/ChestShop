@@ -4,7 +4,7 @@
  __PocketMine Plugin__
 name=ChestShop
 description=You can open your chest shop and purchase from others' chest shop.
-version=1.6
+version=1.7
 author=MinecrafterJPN
 class=ChestShop
 apiversion=10
@@ -12,9 +12,11 @@ apiversion=10
 
 class ChestShop implements Plugin
 {
-	private $api, $db;
+	private $api, $db, $config;
 
 	const CHEST_SLOTS = 27;
+	const CONFIG_POCKETMONEY = 0;
+	const CONFIG_ECONOMY = 1;
 
 	public function __construct(ServerAPI $api, $server = false)
 	{
@@ -23,6 +25,17 @@ class ChestShop implements Plugin
 
 	public function init()
 	{
+		foreach ($this->api->getList() as $i => $ob) {
+			$tmp[] = get_class($ob);
+		}
+		if (file_exists("./plugins/PocketMoney.php")) {
+			$config["moneyplugin"] = self::CONFIG_POCKETMONEY;
+		} elseif (in_array("EconomyAPI", $tmp)) {
+			$config["moneyplugin"] = self::CONFIG_ECONOMY;
+		} else {
+			console(FORMAT_RED . "[ChestShop][Error] PocketMoney or €¢onom¥$ has not been loaded.");
+			$this->api->console->defaultCommands("stop", array(), false, false);
+		}
 		$this->loadDB();
 		$this->api->addHandler("tile.update", array($this, "eventHandler"));
 		$this->api->addHandler("player.block.touch", array($this, "eventHandler"));
@@ -68,11 +81,6 @@ class ChestShop implements Plugin
 								foreach($this->api->plugin->getList() as $plugin) {
 									$tmp[] = $plugin['name'];
 								}
-								if (!in_array("PocketMoney", $tmp)) {
-									$this->api->chat->sendTo(false, "[ChestShop][Error] PocketMoney plugin has not been loaded.", $data['player']->username);
-									console("[ChestShop][Error] PocketMoney plugin has not been loaded.");
-									break;
-								}
 								$buyerMoney = $this->api->dhandle("money.player.get", array('username' => $data['player']->username));
 								if ($buyerMoney === false) break;
 								if ($buyerMoney < $shopInfo['price']) {
@@ -108,16 +116,21 @@ class ChestShop implements Plugin
 										}
 									}
 								}
-								$this->api->dhandle("money.handle", array(
-										'username' => $data['player']->username,
-										'method' => 'grant',
-										'amount' => -$shopInfo['price']
-								));
-								$this->api->dhandle("money.handle", array(
-										'username' => $shopInfo['shopOwner'],
-										'method' => 'grant',
-										'amount' => $shopInfo['price']
-								));
+								if ($this->config["moneyplugin"] === self::CONFIG_POCKETMONEY) {
+									$this->api->dhandle("money.handle", array(
+											'username' => $data['player']->username,
+											'method' => 'grant',
+											'amount' => -$shopInfo['price']
+									));
+									$this->api->dhandle("money.handle", array(
+											'username' => $shopInfo['shopOwner'],
+											'method' => 'grant',
+											'amount' => $shopInfo['price']
+									));
+								} elseif($this->config["moneyplugin"] === self::CONFIG_ECONOMY) {
+									$this->api->economy->useMoney($data['player']->username, $shopInfo['price']);
+									$this->api->economy->takeMoney($shopInfo['shopOwner'], $shopInfo['price']);
+								}
 								$this->api->chat->sendTo(false, "[ChestShop] Completed the transaction.", $data['player']->username);
 								$this->api->chat->sendTo(false, "[ChestShop] {$data['player']->username} purchased your product: {$shopInfo['price']}PM", $shopInfo['shopOwner']);
 								break;
