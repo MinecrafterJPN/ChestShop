@@ -29,9 +29,9 @@ class ChestShop implements Plugin
 			$tmp[] = get_class($ob);
 		}
 		if (file_exists("./plugins/PocketMoney.php")) {
-			$config["moneyplugin"] = self::CONFIG_POCKETMONEY;
+			$this->config["moneyplugin"] = self::CONFIG_POCKETMONEY;
 		} elseif (in_array("EconomyAPI", $tmp)) {
-			$config["moneyplugin"] = self::CONFIG_ECONOMY;
+			$this->config["moneyplugin"] = self::CONFIG_ECONOMY;
 		} else {
 			console(FORMAT_RED . "[ChestShop][Error] PocketMoney or €¢onom¥$ has not been loaded.");
 			$this->api->console->defaultCommands("stop", array(), false, false);
