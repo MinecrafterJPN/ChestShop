@@ -155,7 +155,7 @@ class ChestShop implements Plugin
 						if ($result['shopOwner'] !== $data['player']->username) {
 							$this->api->chat->sendTo(false, "[ChestShop]This chest is protected.", $data['player']->username);
 							return false;
-						} elseif ($data['type']->getID() === ChestBlock) {
+						} elseif ($data['type'] === "break") {
 							$this->db->exec("DELETE FROM ChestShop WHERE chestX = {$data['target']->x} AND chestY = {$data['target']->y} AND chestZ = {$data['target']->z}");
 							$this->api->chat->sendTo(false, "[ChestShop] Your ChestShop was closed", $data['player']->username);
 						}
