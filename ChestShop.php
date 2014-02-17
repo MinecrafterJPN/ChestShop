@@ -15,14 +15,16 @@ class ChestShop implements Plugin
 	const CONFIG_POCKETMONEY = 0;
 	const CONFIG_ECONOMY = 1;
 
-	private $api, $db, $config, $blocks, $items;
+	private $api, $db, $config, $blocks, $blocks2, $items, $items2;
 
 	public function __construct(ServerAPI $api, $server = false)
 	{
 		$this->api = $api;	
 		$this->loadDB();
 		$this->blocks = array();
+		$this->blocks2 = array();
 		$this->items = array();
+		$this->items2 = array();
 	}
 
 	public function init()
@@ -37,9 +39,15 @@ class ChestShop implements Plugin
 		}
 		foreach (Block::$class as $id => $name) {
 			$this->blocks[$id] = strtolower($name);
+			if (substr($name, -5) === "Block") {
+				$this->blocks2[$id] = substr($name, 0, -5);
+			}
 		}
 		foreach (Item::$class as $id => $name) {
 			$this->items[$id] = strtolower($name);
+			if (substr($name, -4) === "Item") {
+				$this->items2[$id] = substr($name, 0, -4);
+			}
 		}
 		$this->api->addHandler("tile.update", array($this, "eventHandler"));
 		$this->api->addHandler("player.block.touch", array($this, "eventHandler"));
@@ -199,7 +207,9 @@ class ChestShop implements Plugin
 		if (isset($this->blocks[$item])) return $item;
 		if (isset($this->items[$item])) return $item;
 		if (($id = array_search($item, $this->blocks)) !== false) return $id;
+		if (($id = array_search($item, $this->blocks2)) !== false) return $id;
 		if (($id = array_search($item, $this->items)) !== false) return $id;
+		if (($id = array_search($item, $this->items2)) !== false) return $id;
 		return false;
 	}
 
