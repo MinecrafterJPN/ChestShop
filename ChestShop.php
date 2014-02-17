@@ -23,7 +23,6 @@ class ChestShop implements Plugin
 		$this->loadDB();
 		$this->blocks = array();
 		$this->items = array();
-
 	}
 
 	public function init()
@@ -55,11 +54,6 @@ class ChestShop implements Plugin
 					$saleNum = $data->data['Text2'];
 					$price = $data->data['Text3'];
 					$productID = $this->isItem($data->data['Text4']);
-					var_dump($this->blocks);
-					var_dump($this->items);
-					
-					console($data->data['Text4']);
-					console($productID);
 
 					if ($data->data['Text1'] !== "") break;
 					if (!is_numeric($saleNum) or $saleNum <= 0) break;
