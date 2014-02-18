@@ -99,10 +99,8 @@ class ChestShop implements Plugin
 								}
 								$chest = $this->api->tile->get(new Position($shopInfo['chestX'], $shopInfo['chestY'], $shopInfo['chestZ'], $data['target']->level));
 								$itemNum = 0;
-								console($shopInfo['productID']);
 								for ($i = 0; $i < CHEST_SLOTS; $i++) {
 									$item = $chest->getSlot($i);
-									console($item->getID());
 									if ($item->getID() === $shopInfo['productID']) {
 										$itemNum += $item->count;
 									}
@@ -210,7 +208,6 @@ class ChestShop implements Plugin
 		if (($id = array_search($item, $this->blocks2)) !== false) return $id;
 		if (($id = array_search($item, $this->items)) !== false) return $id;
 		if (($id = array_search($item, $this->items2)) !== false) return $id;
-		console("アイテムじゃない");
 		return false;
 	}
 
