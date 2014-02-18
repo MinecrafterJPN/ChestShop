@@ -4,7 +4,7 @@
  __PocketMine Plugin__
 name=ChestShop
 description=You can open your chest shop and purchase from others' chest shop.
-version=1.7.3
+version=1.8
 author=MinecrafterJPN
 class=ChestShop
 apiversion=11
@@ -12,8 +12,8 @@ apiversion=11
 
 class ChestShop implements Plugin
 {
-	const CONFIG_POCKETMONEY = 0;
-	const CONFIG_ECONOMY = 1;
+	const CONFIG_POCKETMONEY = 0b01;
+	const CONFIG_ECONOMY = 0b10;
 
 	private $api, $db, $config, $blocks, $blocks2, $items, $items2;
 
@@ -39,15 +39,11 @@ class ChestShop implements Plugin
 		}
 		foreach (Block::$class as $id => $name) {
 			$this->blocks[$id] = strtolower($name);
-			if (substr($name, -5) === "Block") {
-				$this->blocks2[$id] = substr($name, 0, -5);
-			}
+			$this->blocks2[$id] = strtolower(substr($name, 0, -5)); //fooBlock -> foo
 		}
 		foreach (Item::$class as $id => $name) {
 			$this->items[$id] = strtolower($name);
-			if (substr($name, -4) === "Item") {
-				$this->items2[$id] = substr($name, 0, -4);
-			}
+			$this->items2[$id] = strtolower(substr($name, 0, -4)); //barItem -> bar
 		}
 		$this->api->addHandler("tile.update", array($this, "eventHandler"));
 		$this->api->addHandler("player.block.touch", array($this, "eventHandler"));
@@ -84,24 +80,29 @@ class ChestShop implements Plugin
 							case "place":
 								if (($shopInfo = $this->db->query("SELECT * FROM ChestShop WHERE signX = {$data['target']->x} AND signY = {$data['target']->y} AND signZ = {$data['target']->z}")->fetchArray(SQLITE3_ASSOC)) === false) break;
 								if ($shopInfo['shopOwner'] === $data['player']->username) {
-									$this->api->chat->sendTo(false, "[ChestShop] Cannot purchase from your own shop.", $data['player']->username);
+									$this->api->chat->sendTo(false, "[ChestShop][Error] Cannot purchase from your own shop", $data['player']->username);
 									break;
 								}
 								$buyerMoney = false;
-								if ($this->config['moneyplugin'] === self::CONFIG_POCKETMONEY) {
+								if ($this->config['moneyplugin'] & self::CONFIG_POCKETMONEY) {
 									$buyerMoney = PocketMoney::getMoney($data['player']->username);
-								} elseif ($this->config['moneyplugin'] === self::CONFIG_ECONOMY) {
+								} elseif ($this->config['moneyplugin'] & self::CONFIG_ECONOMY) {
 									$buyerMoney = $this->api->economy->getMoney()[$data['player']->username];
 								}
-								if ($buyerMoney === false) break;
+								if ($buyerMoney === false) {
+									$this->api->chat->sendTo(false, "[ChestShop][Error] Cannot get your money data!", $data['player']->username);
+									break;
+								}
 								if ($buyerMoney < $shopInfo['price']) {
-									$this->api->chat->sendTo(false, "[ChestShop]Your money is not enough.", $data['player']->username);
+									$this->api->chat->sendTo(false, "[ChestShop][Error] Your money is not enough", $data['player']->username);
 									break;
 								}
 								$chest = $this->api->tile->get(new Position($shopInfo['chestX'], $shopInfo['chestY'], $shopInfo['chestZ'], $data['target']->level));
 								$itemNum = 0;
+								console($shopInfo['productID']);
 								for ($i = 0; $i < CHEST_SLOTS; $i++) {
 									$item = $chest->getSlot($i);
+									console($item->getID());
 									if ($item->getID() === $shopInfo['productID']) {
 										$itemNum += $item->count;
 									}
@@ -127,10 +128,10 @@ class ChestShop implements Plugin
 										}
 									}
 								}
-								if ($this->config["moneyplugin"] === self::CONFIG_POCKETMONEY) {
+								if ($this->config['moneyplugin'] & self::CONFIG_POCKETMONEY) {
 									PocketMoney::grantMoney($data['player']->username, -$shopInfo['price']);
 									PocketMoney::grantMoney($data['shopOwner']->username, $shopInfo['price']);
-								} elseif($this->config["moneyplugin"] === self::CONFIG_ECONOMY) {
+								} elseif($this->config['moneyplugin'] & self::CONFIG_ECONOMY) {
 									$this->api->economy->useMoney($data['player']->username, $shopInfo['price']);
 									$this->api->economy->takeMoney($shopInfo['shopOwner'], $shopInfo['price']);
 								}
@@ -154,10 +155,9 @@ class ChestShop implements Plugin
 						break;
 					case TILE_CHEST:
 						$result = $this->db->query("SELECT shopOwner FROM ChestShop WHERE chestX = {$data['target']->x} AND chestY = {$data['target']->y} AND chestZ = {$data['target']->z}")->fetchArray(SQLITE3_ASSOC);
-						var_dump($result);
 						if ($result === false) break;
 						if ($result['shopOwner'] !== $data['player']->username) {
-							$this->api->chat->sendTo(false, "[ChestShop]This chest is protected.", $data['player']->username);
+							$this->api->chat->sendTo(false, "[ChestShop] You are not the owner of this chest", $data['player']->username);
 							return false;
 						} elseif ($data['type'] === "break") {
 							$this->db->exec("DELETE FROM ChestShop WHERE chestX = {$data['target']->x} AND chestY = {$data['target']->y} AND chestZ = {$data['target']->z}");
@@ -210,6 +210,7 @@ class ChestShop implements Plugin
 		if (($id = array_search($item, $this->blocks2)) !== false) return $id;
 		if (($id = array_search($item, $this->items)) !== false) return $id;
 		if (($id = array_search($item, $this->items2)) !== false) return $id;
+		console("アイテムじゃない");
 		return false;
 	}
 
