@@ -20,7 +20,6 @@ class ChestShop implements Plugin
 	public function __construct(ServerAPI $api, $server = false)
 	{
 		$this->api = $api;	
-		$this->loadDB();
 		$this->blocks = array();
 		$this->blocks2 = array();
 		$this->items = array();
@@ -47,6 +46,7 @@ class ChestShop implements Plugin
 		}
 		$this->api->addHandler("tile.update", array($this, "eventHandler"));
 		$this->api->addHandler("player.block.touch", array($this, "eventHandler"));
+		$this->loadDB();
 	}
 
 	public function eventHandler($data, $event)
