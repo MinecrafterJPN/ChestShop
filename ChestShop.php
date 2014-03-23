@@ -128,7 +128,7 @@ class ChestShop implements Plugin
 								}
 								if ($this->config['moneyplugin'] & self::CONFIG_POCKETMONEY) {
 									PocketMoney::grantMoney($data['player']->username, -$shopInfo['price']);
-									PocketMoney::grantMoney($data['shopOwner']->username, $shopInfo['price']);
+									PocketMoney::grantMoney($shopInfo['shopOwner'], $shopInfo['price']);
 								} elseif($this->config['moneyplugin'] & self::CONFIG_ECONOMY) {
 									$this->api->economy->useMoney($data['player']->username, $shopInfo['price']);
 									$this->api->economy->takeMoney($shopInfo['shopOwner'], $shopInfo['price']);
@@ -208,7 +208,7 @@ class ChestShop implements Plugin
 		if (($id = array_search($item, $this->blocks2)) !== false) return $id;
 		if (($id = array_search($item, $this->items)) !== false) return $id;
 		if (($id = array_search($item, $this->items2)) !== false) return $id;
-		return false;
+        	return false;
 	}
 
 	public function __destruct()
