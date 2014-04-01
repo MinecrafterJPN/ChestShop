@@ -128,7 +128,7 @@ class ChestShop implements Plugin
 								}
 								if ($this->config['moneyplugin'] & self::CONFIG_POCKETMONEY) {
 									PocketMoney::grantMoney($data['player']->username, -$shopInfo['price']);
-									PocketMoney::grantMoney($data['shopOwner']->username, $shopInfo['price']);
+									PocketMoney::grantMoney($shopInfo['shopOwner']->username, $shopInfo['price']);
 								} elseif($this->config['moneyplugin'] & self::CONFIG_ECONOMY) {
 									$this->api->economy->useMoney($data['player']->username, $shopInfo['price']);
 									$this->api->economy->takeMoney($shopInfo['shopOwner'], $shopInfo['price']);
