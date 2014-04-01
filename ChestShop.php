@@ -4,7 +4,7 @@
  __PocketMine Plugin__
 name=ChestShop
 description=You can open your chest shop and purchase from others' chest shop.
-version=1.8.2
+version=1.8.1
 author=MinecrafterJPN
 class=ChestShop
 apiversion=11
@@ -99,29 +99,33 @@ class ChestShop implements Plugin
 								}
 								$chest = $this->api->tile->get(new Position($shopInfo['chestX'], $shopInfo['chestY'], $shopInfo['chestZ'], $data['target']->level));
 								$itemNum = 0;
+								$pIDdata = explode(":", $shopInfo['productID']);
+								$pID = $pIDdata[0];
+								$pMeta = isset($pIDdata[1]) ? $pIDdata[1] : 0;
 								for ($i = 0; $i < CHEST_SLOTS; $i++) {
 									$item = $chest->getSlot($i);
-									if ($item->getID() === $shopInfo['productID']) {
+
+									if ($item->getID() === $pID and $item->getMetadata() === $pMeta) {
 										$itemNum += $item->count;
 									}
 								}
-								$productName = isset($this->blocks[$shopInfo['productID']]) ? $this->blocks[$shopInfo['productID']] : $this->items[$shopInfo['productID']];
+								$productName = isset($this->blocks[$pID]) ? $this->blocks[$pID] : $this->items[$pID];
 								if ($itemNum < $shopInfo['saleNum']) {
 									$this->api->chat->sendTo(false, "[ChestShop] This shop is out of stock!", $data['player']->username);
-									$this->api->chat->sendTo(false, "[ChestShop] Your ChestShop is out of stock! Replenish $productName!", $shopInfo['shopOwner']);
+									$this->api->chat->sendTo(false, "[ChestShop] Your ChestShop is out of stock! Replenish ${productName}!", $shopInfo['shopOwner']);
 									break;
 								}
 								$this->api->block->commandHandler("give", array($data['player']->username, $shopInfo['productID'], $shopInfo['saleNum']), $data['player'], false);
 								$tmpNum = $shopInfo['saleNum'];
 								for ($i = 0; $i < CHEST_SLOTS; $i++) {
 									$item = $chest->getSlot($i);
-									if ($item->getID() === $shopInfo['productID']) {
+									if ($item->getID() === $pID and $item->getMetadata() === $pMeta) {
 										if ($item->count <= $tmpNum) {
 											$chest->setSlot($i, BlockAPI::getItem(AIR, 0, 0));
 											$tmpNum -= $item->count;
 										} else {
 											$count = $item->count - $tmpNum;
-											$chest->setSlot($i, BlockAPI::getItem($item->getID(), 0, $count));
+											$chest->setSlot($i, BlockAPI::getItem($item->getID(), $pMeta, $count));
 											break;
 										}
 									}
@@ -202,12 +206,13 @@ class ChestShop implements Plugin
 	private function isItem($item)
 	{
 		$item = strtolower($item);
-		if (isset($this->blocks[$item])) return $item;
-		if (isset($this->items[$item])) return $item;
-		if (($id = array_search($item, $this->blocks)) !== false) return $id;
-		if (($id = array_search($item, $this->blocks2)) !== false) return $id;
-		if (($id = array_search($item, $this->items)) !== false) return $id;
-		if (($id = array_search($item, $this->items2)) !== false) return $id;
+		$i = explode(":", $item)[0];	//compatible with metadata
+		if (isset($this->blocks[$i])) return $item;
+		if (isset($this->items[$i])) return $item;
+		if (($id = array_search($i, $this->blocks)) !== false) return $id;
+		if (($id = array_search($i, $this->blocks2)) !== false) return $id;
+		if (($id = array_search($i, $this->items)) !== false) return $id;
+		if (($id = array_search($i, $this->items2)) !== false) return $id;
 		return false;
 	}
 
