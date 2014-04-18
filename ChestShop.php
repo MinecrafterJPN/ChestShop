@@ -170,6 +170,7 @@ class ChestShop implements Plugin
 				saleNum INTEGER NOT NULL,
 				price INTEGER NOT NULL,
 				productID INTEGER NOT NULL,
+				productMeta INTEGER NOT NULL,
 				signX INTEGER NOT NULL,
 				signY INTEGER NOT NULL,
 				signZ INTEGER NOT NULL,
