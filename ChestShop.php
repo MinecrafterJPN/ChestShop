@@ -15,15 +15,11 @@ class ChestShop implements Plugin
 	const CONFIG_POCKETMONEY = 0b01;
 	const CONFIG_ECONOMY = 0b10;
 
-	private $api, $db, $config, $blocks, $blocks2, $items, $items2;
+	private $api, $db, $config;
 
 	public function __construct(ServerAPI $api, $server = false)
 	{
-		$this->api = $api;	
-		$this->blocks = array();
-		$this->blocks2 = array();
-		$this->items = array();
-		$this->items2 = array();
+		$this->api = $api;
 	}
 
 	public function init()
@@ -35,14 +31,6 @@ class ChestShop implements Plugin
 		} else {
 			console(FORMAT_RED."[ChestShop][Error] PocketMoney or €¢onom¥$ has not been loaded.");
 			$this->api->console->defaultCommands("stop", array(), false, false);
-		}
-		foreach (Block::$class as $id => $name) {
-			$this->blocks[$id] = strtolower($name);
-			$this->blocks2[$id] = strtolower(substr($name, 0, -5)); //fooBlock -> foo
-		}
-		foreach (Item::$class as $id => $name) {
-			$this->items[$id] = strtolower($name);
-			$this->items2[$id] = strtolower(substr($name, 0, -4)); //barItem -> bar
 		}
 		$this->api->addHandler("tile.update", array($this, "eventHandler"));
 		$this->api->addHandler("player.block.touch", array($this, "eventHandler"));
