@@ -18,7 +18,7 @@ class ChestShop implements Plugin
 	const CONFIG_POCKETMONEY = 0b01;
 	const CONFIG_ECONOMY = 0b10;
 
-	private $api, $db, $config;
+	private $api, $db, $config, $system;
 
 	public function __construct(ServerAPI $api, $server = false)
 	{
@@ -38,6 +38,8 @@ class ChestShop implements Plugin
 		$this->api->addHandler("tile.update", array($this, "eventHandler"));
 		$this->api->addHandler("player.block.touch", array($this, "eventHandler"));
 		$this->loadDB();
+		$this->system = new Config($this->api->plugin->configPath($this) . "system.yml", CONFIG_YAML, array("insert_productMeta" => false));
+		if (!$this->system->get("optimized")) $this->insertProductMeta();
 	}
 
 	public function eventHandler($data, $event)
@@ -197,6 +199,11 @@ class ChestShop implements Plugin
 		$meta = isset($meta) ? $meta : 0;
 		if (defined(strtoupper($name))) return $item;
 		else return false;
+	}
+
+	private function insertProductMeta()
+	{
+		$this->db->exec("ALTER TABLE ChestShop ADD COLUMN productMeta INTEGER DEFAULT 0 NOT NULL");
 	}
 
 	public function __destruct()
