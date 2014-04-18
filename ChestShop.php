@@ -193,15 +193,10 @@ class ChestShop implements Plugin
 
 	private function isItem($item)
 	{
-		$item = strtolower($item);
-		$i = explode(":", $item)[0];	//compatible with metadata
-		if (isset($this->blocks[$i])) return $item;
-		if (isset($this->items[$i])) return $item;
-		if (($id = array_search($i, $this->blocks)) !== false) return $id;
-		if (($id = array_search($i, $this->blocks2)) !== false) return $id;
-		if (($id = array_search($i, $this->items)) !== false) return $id;
-		if (($id = array_search($i, $this->items2)) !== false) return $id;
-		return false;
+		list($name, $meta) = explode(":", $item);
+		$meta = isset($meta) ? $meta : 0;
+		if (defined(strtoupper($name))) return $item;
+		else return false;
 	}
 
 	public function __destruct()
