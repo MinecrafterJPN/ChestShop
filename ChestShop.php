@@ -28,12 +28,12 @@ class ChestShop implements Plugin
 
 	public function init()
 	{
-		if (file_exists("./plugins/PocketMoney.php")) {
+		if (file_exists(DATA_PATH."plugins/PocketMoney.php")) {
 			$this->config['moneyplugin'] = self::CONFIG_POCKETMONEY;
-		} elseif (file_exists("./plugins/EconomyAPI.php")) {
+		} elseif (file_exists(DATA_PATH."plugins/EconomyAPI.php")) {
 			$this->config['moneyplugin'] = self::CONFIG_ECONOMY;
 		} else {
-			console(FORMAT_RED . "[ChestShop][Error] PocketMoney or €¢onom¥$ has not been loaded.");
+			console(FORMAT_RED."[ChestShop][Error] PocketMoney or €¢onom¥$ has not been loaded.");
 			$this->api->console->defaultCommands("stop", array(), false, false);
 		}
 		foreach (Block::$class as $id => $name) {
