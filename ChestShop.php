@@ -10,9 +10,6 @@ class=ChestShop
 apiversion=11
 */
 
-// TODO : データベースの更新処理、メタデータ行を追加する
-// 行名 : productMeta
-
 class ChestShop implements Plugin
 {
 	const CONFIG_POCKETMONEY = 0b01;
@@ -204,8 +201,10 @@ class ChestShop implements Plugin
 
 	private function insertProductMeta()
 	{
+		//bool値を判断したほうがいいかも...?
 		$this->db->exec("ALTER TABLE ChestShop ADD COLUMN productMeta INTEGER DEFAULT 0 NOT NULL");
 		$this->system->set("insert_productMeta", true);
+		console(FORMAT_GRAY."[ChestShop][Debug] Inserted productMeta");
 		$this->system->save();
 	}
 
