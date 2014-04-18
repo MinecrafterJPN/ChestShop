@@ -10,6 +10,9 @@ class=ChestShop
 apiversion=11
 */
 
+// TODO : データベースの更新処理、メタデータ行を追加する
+// 行名 : productMeta
+
 class ChestShop implements Plugin
 {
 	const CONFIG_POCKETMONEY = 0b01;
@@ -87,20 +90,15 @@ class ChestShop implements Plugin
 								}
 								$chest = $this->api->tile->get(new Position($shopInfo['chestX'], $shopInfo['chestY'], $shopInfo['chestZ'], $data['target']->level));
 								$itemNum = 0;
-								$pIDdata = explode(":", $shopInfo['productID']);
-								$pID = $pIDdata[0];
-								$pMeta = isset($pIDdata[1]) ? $pIDdata[1] : 0;
+								$pID = $shopInfo['productID'];
+								$pMeta = $shopInfo['productMeta'];
 								for ($i = 0; $i < CHEST_SLOTS; $i++) {
 									$item = $chest->getSlot($i);
-
-									if ($item->getID() === $pID and $item->getMetadata() === $pMeta) {
-										$itemNum += $item->count;
-									}
+									if ($item->getID() === $pID and $item->getMetadata() === $pMeta) $itemNum += $item->count;
 								}
-								$productName = isset($this->blocks[$pID]) ? $this->blocks[$pID] : $this->items[$pID];
 								if ($itemNum < $shopInfo['saleNum']) {
 									$this->api->chat->sendTo(false, "[ChestShop] This shop is out of stock!", $data['player']->username);
-									$this->api->chat->sendTo(false, "[ChestShop] Your ChestShop is out of stock! Replenish ${productName}!", $shopInfo['shopOwner']);
+									$this->api->chat->sendTo(false, "[ChestShop] Your ChestShop is out of stock! Replenish ID:${pID}!", $shopInfo['shopOwner']);
 									break;
 								}
 								$this->api->block->commandHandler("give", array($data['player']->username, $shopInfo['productID'], $shopInfo['saleNum']), $data['player'], false);
@@ -126,7 +124,7 @@ class ChestShop implements Plugin
 									$this->api->economy->takeMoney($shopInfo['shopOwner'], $shopInfo['price']);
 								}
 								$this->api->chat->sendTo(false, "[ChestShop] Completed the transaction.", $data['player']->username);
-								$this->api->chat->sendTo(false, "[ChestShop] {$data['player']->username} purchased your $productName: {$shopInfo['price']}PM", $shopInfo['shopOwner']);
+								$this->api->chat->sendTo(false, "[ChestShop] {$data['player']->username} purchased ID:{$pID}: {$shopInfo['price']}PM", $shopInfo['shopOwner']);
 								break;
 							case "break":
 								$result = $this->db->query("SELECT shopOwner FROM ChestShop WHERE signX = {$data['target']->x} AND signY = {$data['target']->y} AND signZ = {$data['target']->z}")->fetchArray(SQLITE3_ASSOC);
@@ -136,7 +134,7 @@ class ChestShop implements Plugin
 										return false;
 									} else {
 										$this->db->exec("DELETE FROM ChestShop WHERE {$data['target']->x} AND signY = {$data['target']->y} AND signZ = {$data['target']->z}");
-										$this->api->chat->sendTo(false, "[ChestShop] Your ChestShop was closed", $data['player']->username);
+										$this->api->chat->sendTo(false, "[ChestShop] You closed your ChestShop", $data['player']->username);
 										break;
 									}
 								}
@@ -145,14 +143,16 @@ class ChestShop implements Plugin
 						break;
 					case TILE_CHEST:
 						$result = $this->db->query("SELECT shopOwner FROM ChestShop WHERE chestX = {$data['target']->x} AND chestY = {$data['target']->y} AND chestZ = {$data['target']->z}")->fetchArray(SQLITE3_ASSOC);
-						if ($result === false) break;
-						if ($result['shopOwner'] !== $data['player']->username) {
+						if ($result !== false) {
+							if ($result['shopOwner'] !== $data['player']->username) {
 							$this->api->chat->sendTo(false, "[ChestShop] You are not the owner of this chest", $data['player']->username);
 							return false;
-						} elseif ($data['type'] === "break") {
-							$this->db->exec("DELETE FROM ChestShop WHERE chestX = {$data['target']->x} AND chestY = {$data['target']->y} AND chestZ = {$data['target']->z}");
-							$this->api->chat->sendTo(false, "[ChestShop] Your ChestShop was closed", $data['player']->username);
+							} elseif ($data['type'] === "break") {
+								$this->db->exec("DELETE FROM ChestShop WHERE chestX = {$data['target']->x} AND chestY = {$data['target']->y} AND chestZ = {$data['target']->z}");
+								$this->api->chat->sendTo(false, "[ChestShop] You closed your ChestShop", $data['player']->username);
+							}
 						}
+						
 						break;
 				}
 		}
