@@ -47,19 +47,23 @@ class ChestShop implements Plugin
 					$shopOwner = $data->data['creator'];
 					$saleNum = $data->data['Text2'];
 					$price = $data->data['Text3'];
-					$productID = $this->isItem($data->data['Text4']);
+					$productData = $this->isItem($data->data['Text4']);
 
 					if ($data->data['Text1'] !== "") break;
 					if (!is_numeric($saleNum) or $saleNum <= 0) break;
 					if (!is_numeric($price) or $price < 0) break;
-					if ($productID === false) break;
+					if ($productData === false) break;
 
 					$chest = $this->getSideChest($data);
 					if ($chest === false) break;
 					if (strlen($shopOwner) > 15) $shopOwner = substr($shopOwner, 0, 15);
 
+					list($pID, $pMeta) = explode(":", $productData);
+					$pMeta = isset($pMeta) ? $pMeta : 0;
+
 					$data->setText($shopOwner, "Amount:$saleNum", "Price:$price", $data->data['Text4']);
-					$this->db->exec("INSERT INTO ChestShop (shopOwner, saleNum, price, productID, signX, signY, signZ, chestX, chestY, chestZ) VALUES ('$shopOwner', $saleNum, $price, $productID, $data->x, $data->y, $data->z, $chest->x, $chest->y, $chest->z)");
+					// 自動変換処理
+					$this->db->exec("INSERT INTO ChestShop (shopOwner, saleNum, price, productID, productMeta, signX, signY, signZ, chestX, chestY, chestZ) VALUES ('$shopOwner', $saleNum, $price, $pID, $pMeta, $data->x, $data->y, $data->z, $chest->x, $chest->y, $chest->z)");
 				}
 				break;
 			case "player.block.touch":
@@ -193,10 +197,11 @@ class ChestShop implements Plugin
 
 	private function isItem($item)
 	{
-		list($name, $meta) = explode(":", $item);
+		list($id, $meta) = explode(":", $item);
 		$meta = isset($meta) ? $meta : 0;
-		if (defined(strtoupper($name))) return $item;
-		else return false;
+		// IDが存在するかどうか
+		// if (defined(strtoupper($name))) return $item;
+		// else return false;
 	}
 
 	private function insertProductMeta()
