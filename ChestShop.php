@@ -3,7 +3,7 @@
 /*
  __PocketMine Plugin__
 name=ChestShop
-description=You can open your chest shop and purchase from others' chest shop.
+description=You can open your chest shop
 version=1.8.2
 author=MinecrafterJPN
 class=ChestShop
@@ -175,7 +175,7 @@ class ChestShop implements Plugin
 				chestY INTEGER NOT NULL,
 				chestZ INTEGER NOT NULL
 		)"
-		);
+		);	
 	}
 
 	private function getSideChest($data)
@@ -201,10 +201,13 @@ class ChestShop implements Plugin
 
 	private function insertProductMeta()
 	{
-		//bool値を判断したほうがいいかも...?
+		$columns = $this->db->query('PRAGMA table_info(ChestShop)');
+		while ($column = $columns->fetchArray(SQLITE3_ASSOC)) {
+			if ($column['name'] === "productMeta") return;
+		}
 		$this->db->exec("ALTER TABLE ChestShop ADD COLUMN productMeta INTEGER DEFAULT 0 NOT NULL");
 		$this->system->set("insert_productMeta", true);
-		console(FORMAT_GRAY."[ChestShop][Debug] Inserted productMeta");
+		console(FORMAT_GRAY."[ChestShop][Debug] Inserted productMeta column");
 		$this->system->save();
 	}
 
