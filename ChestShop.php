@@ -76,7 +76,7 @@ class ChestShop implements Plugin
 					$chest = $this->getSideChest($data);
 					if ($chest === false) break;
 
-					$productName = isset(Block::$class[$pID]) ? Block::$class[$pID] : Item::$class[$pID];
+					$productName = isset(Block::$class[$pID]) ? substr(Block::$class[$pID], 0, -5) : substr(Item::$class[$pID], 0, -4);
 					$data->setText($shopOwner, "Amount:$saleNum", "Price:$price", "$productName:$pMeta");
 					$this->db->exec("INSERT INTO ChestShop (shopOwner, saleNum, price, productID, productMeta, signX, signY, signZ, chestX, chestY, chestZ) VALUES ('$shopOwner', $saleNum, $price, $pID, $pMeta, $data->x, $data->y, $data->z, $chest->x, $chest->y, $chest->z)");
 				}
