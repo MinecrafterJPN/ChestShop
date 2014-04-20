@@ -7,7 +7,7 @@ description=Open your chest shop
 version=1.8.2
 author=MinecrafterJPN
 class=ChestShop
-apiversion=11
+apiversion=12
 */
 
 class ChestShop implements Plugin
@@ -64,19 +64,18 @@ class ChestShop implements Plugin
 					$shopOwner = $data->data['creator'];
 					$saleNum = $data->data['Text2'];
 					$price = $data->data['Text3'];
-					$productData = $this->isItem($data->data['Text4']);
+					$productData = explode(":", $data->data['Text4']);
+					$pID = $productData[0];
+					$pMeta = isset($productData[1]) ? $productData[1] : 0;
+					$pID = $this->isItem($pID);
 
 					if ($data->data['Text1'] !== "") break;
 					if (!is_numeric($saleNum) or $saleNum <= 0) break;
 					if (!is_numeric($price) or $price < 0) break;
-					if ($productData === false) break;
-
+					if ($pID === false) break;
 					$chest = $this->getSideChest($data);
 					if ($chest === false) break;
-					if (strlen($shopOwner) > 15) $shopOwner = substr($shopOwner, 0, 15);
-
-					list($pID, $pMeta) = explode(":", $productData);
-					$pMeta = isset($pMeta) ? $pMeta : 0;
+					//if (strlen($shopOwner) > 15) $shopOwner = substr($shopOwner, 0, 15);
 
 					$data->setText($shopOwner, "Amount:$saleNum", "Price:$price", $data->data['Text4']);
 					// 自動変換処理
@@ -212,12 +211,10 @@ class ChestShop implements Plugin
 		return false;
 	}
 
-	private function isItem($item)
+	private function isItem($id)
 	{
-		list($id, $meta) = explode(":", $item);
-		$meta = isset($meta) ? $meta : 0;
-		if (isset(Block::$class[$id])) return $item;
-		if (isset(Item::$class[$id])) return $item;
+		if (isset(Block::$class[$id])) return $id;
+		if (isset(Item::$class[$id])) return $id;
 		return false;
 	}
 
