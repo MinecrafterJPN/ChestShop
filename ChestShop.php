@@ -3,7 +3,7 @@
 /*
  __PocketMine Plugin__
 name=ChestShop
-description=You can open your chest shop
+description=Open your chest shop
 version=1.8.2
 author=MinecrafterJPN
 class=ChestShop
@@ -199,21 +199,21 @@ class ChestShop implements Plugin
 	{
 		list($id, $meta) = explode(":", $item);
 		$meta = isset($meta) ? $meta : 0;
-		// IDが存在するかどうか
-		// if (defined(strtoupper($name))) return $item;
-		// else return false;
+		if (isset(Block::$class[$id])) return $item;
+		if (isset(Item::$class[$id])) return $item;
+		return false;
 	}
 
 	private function insertProductMeta()
 	{
+		$this->system->set("insert_productMeta", true);
+		$this->system->save();
 		$columns = $this->db->query('PRAGMA table_info(ChestShop)');
 		while ($column = $columns->fetchArray(SQLITE3_ASSOC)) {
 			if ($column['name'] === "productMeta") return;
 		}
 		$this->db->exec("ALTER TABLE ChestShop ADD COLUMN productMeta INTEGER DEFAULT 0 NOT NULL");
-		$this->system->set("insert_productMeta", true);
 		console(FORMAT_GRAY."[ChestShop][Debug] Inserted productMeta column");
-		$this->system->save();
 	}
 
 	public function __destruct()
