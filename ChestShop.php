@@ -4,7 +4,7 @@
  __PocketMine Plugin__
 name=ChestShop
 description=Open your chest shop
-version=1.8.2
+version=1.9dev
 author=MinecrafterJPN
 class=ChestShop
 apiversion=12
