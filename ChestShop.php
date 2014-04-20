@@ -119,7 +119,7 @@ class ChestShop implements Plugin
 									$this->api->chat->sendTo(false, "[ChestShop] Your ChestShop is out of stock! Replenish ID:${pID}!", $shopInfo['shopOwner']);
 									break;
 								}
-								$this->api->block->commandHandler("give", array($data['player']->username, $shopInfo['productID'], $shopInfo['saleNum']), $data['player'], false);
+								$this->api->block->commandHandler("give", array($data['player']->username, "{$shopInfo['productID']}:{$shopInfo['productMeta']}", $shopInfo['saleNum']), $data['player'], false);
 								$tmpNum = $shopInfo['saleNum'];
 								for ($i = 0; $i < CHEST_SLOTS; $i++) {
 									$item = $chest->getSlot($i);
