@@ -34,9 +34,26 @@ class ChestShop implements Plugin
 		}
 		$this->api->addHandler("tile.update", array($this, "eventHandler"));
 		$this->api->addHandler("player.block.touch", array($this, "eventHandler"));
+		$this->api->console->register("id", "Search block ID", array($this, "commandHandler"));
 		$this->loadDB();
 		$this->system = new Config($this->api->plugin->configPath($this) . "system.yml", CONFIG_YAML, array("insert_productMeta" => false));
 		if (!$this->system->get("insert_productMeta")) $this->insertProductMeta();
+	}
+
+	public function commandHandler($cmd, $args, $issuer, $alias)
+	{
+		$output .= "";
+		$name = array_shift($args);
+		foreach (Block::$class as $key => $value) {
+			$value = substr($value, 0, -5);
+			if (strpos(strtolower($value), strtolower($name)) !== false) $output .= "[ChestShop] ID:$key $value\n";
+		}
+		foreach (Item::$class as $key => $value) {
+			$value = substr($value, 0, -4);
+			if (strpos(strtolower($value), strtolower($name)) !== false) $output .= "[ChestShop] ID:$key $value\n";
+		}
+		if ($output === "") $output .= "[ChestShop] Not found\n";
+		return $output;
 	}
 
 	public function eventHandler($data, $event)
