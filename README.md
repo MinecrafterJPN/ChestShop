@@ -1,6 +1,6 @@
 # ChestShop
 
-ChestShop is the PocketMine-MP plugin which enables you to run your chest shop and purchase from others' chest shop.
+ChestShop is the PocketMine-MP plugin which enables you to open your ChestShop.
 
 # Installation
 1.  Drop it into your /plugins folder.
@@ -8,37 +8,28 @@ ChestShop is the PocketMine-MP plugin which enables you to run your chest shop a
 
 # How to open your chest shop
 
-1. Locate a chest box
+1. Locate a chest
 ![Locate a chest box](https://dl.dropboxusercontent.com/s/p6oh22ipybt103q/pic1.jpg)
 
-2. Put items you want to sell into the chest box
+2. Put items you want to sell into the chest
 ![Put items you want to sell into the chest box](https://dl.dropboxusercontent.com/s/rf60dfcp7oghds8/pic2.jpg)
 
-3. Locate a sign next to the chest box
+3. Locate a sign next to the chest
 
   **You must follow the following format**
   
   | Line No. | Value |
   | :------: | :---: |
   | 1 | Blank(You must not write anything) |
-  | 2 | The number you want to sell per one transaction |
-  | 3 | The price you want to sell |
-  | 4 | The ID or name of block you want to sell.(No space between name) |
+  | 2 | Number you want to sell per one transaction |
+  | 3 | Price |
+  | 4 | Item ID |
   
-  ```
-  [OK]
-  DiamondSword
-  diamondsword
-  diAmOnDSWorD
-
-  [NG]
-  diamond sword
-  Diamond Sword
-  diAmONd swOrD
-  ```
+  If you don't know ID, you should use id search command `/id <itemname>`  
   
-![Locate a sign next to the chest box](https://dl.dropboxusercontent.com/s/zfe7a3v1tf8s9w6/pic3.jpg)
+4. ID is changed to item name automatically
+![Locate a sign next to Chest](https://dl.dropboxusercontent.com/s/zfe7a3v1tf8s9w6/pic3.jpg)
 
 # How to purchase from others' chest shop
 
-1. Tap the sign with which you want to transact
+1. Only tap the sign
