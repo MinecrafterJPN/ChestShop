@@ -1,6 +1,6 @@
 # ChestShop
 
-ChestShop is the PocketMine-MP plugin which enables you to run your chest shop and purchase from others' chest shop.
+ChestShop is the PocketMine-MP plugin which enables you to open your ChestShop.
 
 # Installation
 1.  Drop it into your /plugins folder.
@@ -21,23 +21,13 @@ ChestShop is the PocketMine-MP plugin which enables you to run your chest shop a
   | Line No. | Value |
   | :------: | :---: |
   | 1 | Blank(You must not write anything) |
-  | 2 | The number you want to sell per one transaction |
-  | 3 | The price you want to sell |
-  | 4 | The ID or name of block you want to sell.(No space between name) |
+  | 2 | Number you want to sell per one transaction |
+  | 3 | Price you want to sell |
+  | 4 | ID of item you want to sell |
   
-  ```
-  [OK]
-  DiamondSword
-  diamondsword
-  diAmOnDSWorD
-
-  [NG]
-  diamond sword
-  Diamond Sword
-  diAmONd swOrD
-  ```
+If you don't know ID, you should use id search command /id <itemname>
   
-![Locate a sign next to the chest box](https://dl.dropboxusercontent.com/s/zfe7a3v1tf8s9w6/pic3.jpg)
+![Locate a sign next to Chest](https://dl.dropboxusercontent.com/s/zfe7a3v1tf8s9w6/pic3.jpg)
 
 # How to purchase from others' chest shop
 
