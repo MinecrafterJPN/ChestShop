@@ -1,6 +1,6 @@
 # ChestShop
 
-O your ChestShop.
+Open your ChestShop.
 
 # Installation
 1.  Drop it into your /plugins folder.
