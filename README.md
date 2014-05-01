@@ -1,6 +1,6 @@
 # ChestShop
 
-ChestShop is the PocketMine-MP plugin which enables you to open your ChestShop.
+O your ChestShop.
 
 # Installation
 1.  Drop it into your /plugins folder.
