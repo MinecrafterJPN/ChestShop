@@ -4,7 +4,7 @@
  __PocketMine Plugin__
 name=ChestShop
 description=Open your chest shop
-version=1.9
+version=1.9dev
 author=MinecrafterJPN
 class=ChestShop
 apiversion=12
@@ -65,9 +65,8 @@ class ChestShop implements Plugin
 					$saleNum = $data->data['Text2'];
 					$price = $data->data['Text3'];
 					$productData = explode(":", $data->data['Text4']);
-					$pID = $productData[0];
-					$pMeta = isset($productData[1]) ? $productData[1] : 0;
-					$pID = $this->isItem($pID);
+					$pID = $this->isItem(array_shift($productData));
+					$pMeta = ($m = array_shift($productData)) ? $m : 0;
 
 					if ($data->data['Text1'] !== "") break;
 					if (!is_numeric($saleNum) or $saleNum <= 0) break;
@@ -136,7 +135,7 @@ class ChestShop implements Plugin
 								}
 								if ($this->config['moneyplugin'] & self::CONFIG_POCKETMONEY) {
 									PocketMoney::grantMoney($data['player']->username, -$shopInfo['price']);
-									PocketMoney::grantMoney($shopInfo['shopOwner']->username, $shopInfo['price']);
+									PocketMoney::grantMoney($shopInfo['shopOwner'], $shopInfo['price']);
 								} elseif($this->config['moneyplugin'] & self::CONFIG_ECONOMY) {
 									$this->api->economy->useMoney($data['player']->username, $shopInfo['price']);
 									$this->api->economy->takeMoney($shopInfo['shopOwner'], $shopInfo['price']);
