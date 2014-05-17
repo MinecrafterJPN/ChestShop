@@ -7,7 +7,7 @@ description=Open your chest shop
 version=1.9
 author=MinecrafterJPN
 class=ChestShop
-apiversion=12
+apiversion=12,13
 */
 
 class ChestShop implements Plugin
@@ -42,7 +42,7 @@ class ChestShop implements Plugin
 
 	public function commandHandler($cmd, $args, $issuer, $alias)
 	{
-		$output .= "";
+		$output = "";
 		$name = array_shift($args);
 		foreach (Block::$class as $key => $value) {
 			$value = substr($value, 0, -5);
@@ -106,6 +106,9 @@ class ChestShop implements Plugin
 									break;
 								}
 								$chest = $this->api->tile->get(new Position($shopInfo['chestX'], $shopInfo['chestY'], $shopInfo['chestZ'], $data['target']->level));
+								if(!$chest instanceof Tile){
+									break;
+								}
 								$itemNum = 0;
 								$pID = $shopInfo['productID'];
 								$pMeta = $shopInfo['productMeta'];
@@ -162,8 +165,8 @@ class ChestShop implements Plugin
 						$result = $this->db->query("SELECT shopOwner FROM ChestShop WHERE chestX = {$data['target']->x} AND chestY = {$data['target']->y} AND chestZ = {$data['target']->z}")->fetchArray(SQLITE3_ASSOC);
 						if ($result !== false) {
 							if ($result['shopOwner'] !== $data['player']->username) {
-							$this->api->chat->sendTo(false, "[ChestShop] You are not the owner of this chest", $data['player']->username);
-							return false;
+								$this->api->chat->sendTo(false, "[ChestShop] You are not the owner of this chest", $data['player']->username);
+								return false;
 							} elseif ($data['type'] === "break") {
 								$this->db->exec("DELETE FROM ChestShop WHERE chestX = {$data['target']->x} AND chestY = {$data['target']->y} AND chestZ = {$data['target']->z}");
 								$this->api->chat->sendTo(false, "[ChestShop] You closed your ChestShop", $data['player']->username);
