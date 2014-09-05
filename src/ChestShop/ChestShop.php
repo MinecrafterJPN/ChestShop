@@ -8,6 +8,7 @@
 
 namespace ChestShop;
 
+use pocketmine\item\Block;
 use pocketmine\plugin\PluginBase;
 use pocketmine\command\Command;
 use pocketmine\command\CommandSender;
@@ -22,7 +23,7 @@ class ChestShop extends PluginBase
 
     public function onEnable()
     {
-        $this->database = new \SQLite3($this->getDataFolder()."ChestShop.sqlite3");
+        $this->database = new \SQLite3($this->getDataFolder() . "ChestShop.sqlite3");
         $this->getServer()->getPluginManager()->registerEvents(new EventListener($this), $this);
         $sql = "CREATE TABLE IF NOT EXISTS ChestShop(
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -50,7 +51,14 @@ class ChestShop extends PluginBase
         switch ($command->getName()) {
             case "id":
                 $name = array_shift($args);
-                //id検索
+                $constants = array_keys((new \ReflectionClass("pocketmine\\item\\Item"))->getConstants());
+                foreach ($constants as $constant) {
+                    if (stripos($constant, $name) !== false) {
+                        $constant = str_replace("_", " ", $constant);
+                        $id = constant("pocketmine\\item\\Item::$constant");
+                        $sender->sendMessage("ID:$id $constant");
+                    }
+                }
                 return true;
 
             default:

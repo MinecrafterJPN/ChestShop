@@ -3,7 +3,9 @@
 namespace ChestShop;
 
 
+use pocketmine\event\block\BlockPlaceEvent;
 use pocketmine\event\Listener;
+use pocketmine\item\Block;
 use pocketmine\item\Item;
 
 class EventListener implements Listener
@@ -15,14 +17,12 @@ class EventListener implements Listener
         $this->plugin = $plugin;
     }
 
-    public function onTileUpdate()
+    public function onPlayerPlaceBlock(BlockPlaceEvent $event)
     {
-
-    }
-
-    public function onPlayerPlaceBlock()
-    {
-
+        $replacedBlock = $event->getBlockReplaced();
+        if ($replacedBlock->getID() === Block::SIGN_POST || $replacedBlock->getID() === Block::WALL_SIGN) {
+            
+        }
     }
 
     private function isItem($id)
