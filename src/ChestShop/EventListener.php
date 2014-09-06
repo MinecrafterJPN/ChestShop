@@ -2,8 +2,6 @@
 
 namespace ChestShop;
 
-
-use pocketmine\block\Chest;
 use pocketmine\event\block\BlockPlaceEvent;
 use pocketmine\event\block\SignChangeEvent;
 use pocketmine\event\Listener;

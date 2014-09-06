@@ -8,15 +8,12 @@
 
 namespace ChestShop;
 
-use pocketmine\item\Block;
 use pocketmine\plugin\PluginBase;
 use pocketmine\command\Command;
 use pocketmine\command\CommandSender;
 
 class ChestShop extends PluginBase
 {
-    private $database;
-
     public function onLoad()
     {
     }
