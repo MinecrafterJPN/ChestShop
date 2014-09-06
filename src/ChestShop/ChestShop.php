@@ -23,23 +23,7 @@ class ChestShop extends PluginBase
 
     public function onEnable()
     {
-        $this->database = new \SQLite3($this->getDataFolder() . "ChestShop.sqlite3");
-        $this->getServer()->getPluginManager()->registerEvents(new EventListener($this), $this);
-        $sql = "CREATE TABLE IF NOT EXISTS ChestShop(
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    shopOwner TEXT NOT NULL,
-                    saleNum INTEGER NOT NULL,
-                    price INTEGER NOT NULL,
-                    productID INTEGER NOT NULL,
-                    productMeta INTEGER NOT NULL,
-                    signX INTEGER NOT NULL,
-                    signY INTEGER NOT NULL,
-                    signZ INTEGER NOT NULL,
-                    chestX INTEGER NOT NULL,
-                    chestY INTEGER NOT NULL,
-                    chestZ INTEGER NOT NULL
-		)";
-        $this->database->exec($sql);
+        $this->getServer()->getPluginManager()->registerEvents(new EventListener($this, new DataBaseManager($this->getDataFolder() . "ChestShop.sqlite3")), $this);
     }
 
     public function onDisable()
