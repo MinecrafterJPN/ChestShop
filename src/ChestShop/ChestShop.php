@@ -20,7 +20,7 @@ class ChestShop extends PluginBase
 
     public function onEnable()
     {
-        $this->getServer()->getPluginManager()->registerEvents(new EventListener($this, new DataBaseManager($this->getDataFolder() . "ChestShop.sqlite3")), $this);
+        $this->getServer()->getPluginManager()->registerEvents(new EventListener($this, new DatabaseManager($this->getDataFolder() . "ChestShop.sqlite3")), $this);
     }
 
     public function onDisable()

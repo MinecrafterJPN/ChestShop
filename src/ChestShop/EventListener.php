@@ -13,12 +13,12 @@ use pocketmine\math\Vector3;
 class EventListener implements Listener
 {
     private $plugin;
-    private $dataBaseManager;
+    private $databaseManager;
 
-    public function __construct(ChestShop $plugin, DataBaseManager $dbm)
+    public function __construct(ChestShop $plugin, DatabaseManager $dbm)
     {
         $this->plugin = $plugin;
-        $this->dataBaseManager = $dbm;
+        $this->databaseManager = $dbm;
     }
 
     public function onPlayerPlaceBlock(BlockPlaceEvent $event)
@@ -53,7 +53,7 @@ class EventListener implements Listener
         $event->setLine(2, "Price:$price");
         $event->setLine(3, "$productName:$pMeta");
 
-        $this->dataBaseManager->registerShop($shopOwner, $saleNum, $price, $pID, $pMeta, $sign, $chest);
+        $this->databaseManager->registerShop($shopOwner, $saleNum, $price, $pID, $pMeta, $sign, $chest);
     }
 
     private function getSideChest(Position $pos)
