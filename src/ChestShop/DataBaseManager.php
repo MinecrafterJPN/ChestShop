@@ -3,7 +3,7 @@
 namespace ChestShop;
 
 
-class DataBaseManager
+class DatabaseManager
 {
     private $database;
 
