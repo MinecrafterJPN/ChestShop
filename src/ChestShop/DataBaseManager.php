@@ -32,4 +32,13 @@ class DatabaseManager
         $this->database->exec("INSERT INTO ChestShop (shopOwner, saleNum, price, productID, productMeta, signX, signY, signZ, chestX, chestY, chestZ) VALUES ('$shopOwner', $saleNum, $price, $productID, $productMeta, $sign->x, $sign->y, $sign->z, $chest->x, $chest->y, $chest->z)");
     }
 
+    public function selectByCondition(array $condition)
+    {
+        $where = "";
+        foreach ($condition as $key => $val) {
+            $where .= "$key = $val";
+            $where .= " ";
+        }
+        return $this->database->query("SELECT * FROM ChestShop WHERE $where")->fetchArray(SQLITE3_ASSOC);
+    }
 } 

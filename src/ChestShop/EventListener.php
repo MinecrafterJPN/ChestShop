@@ -6,9 +6,12 @@ use pocketmine\event\block\BlockPlaceEvent;
 use pocketmine\event\block\SignChangeEvent;
 use pocketmine\event\Listener;
 use pocketmine\block\Block;
+use pocketmine\event\player\PlayerInteractEvent;
 use pocketmine\item\Item;
 use pocketmine\level\Position;
 use pocketmine\math\Vector3;
+use pocketmine\tile\Chest as TileChest;
+use pocketmine\block\Chest as BlockChest;
 
 class EventListener implements Listener
 {
@@ -19,6 +22,47 @@ class EventListener implements Listener
     {
         $this->plugin = $plugin;
         $this->databaseManager = $dbm;
+    }
+
+    public function onPlayerInteract(PlayerInteractEvent $event)
+    {
+        $block = $event->getBlock();
+        $player = $event->getPlayer();
+
+        if ($block->getID() === Block::SIGN_POST || $block->getID() === Block::WALL_SIGN) {
+            $condition = [
+                "signX" => $block->getX(),
+                "signY" => $block->getY(),
+                "signZ" => $block->getZ()
+            ];
+            if (($shopInfo = $this->databaseManager->selectByCondition($condition)) === false) return;
+            if ($shopInfo['shopOwner'] === $player->getName()) {
+                $player->sendMessage("Cannot purchase from your own shop!");
+                return;
+            }
+            $buyerMoney = $this->plugin->getServer()->getPluginManager()->getPlugin("PocketMoney")->getMoney($player->getName());
+            if ($buyerMoney instanceof SimpleError) {
+                $player->sendMessage("Couldn't get your money data!");
+                return;
+            }
+            if ($buyerMoney < $shopInfo['price']) {
+                $player->sendMessage("Your money is not enough!");
+                return;
+            }
+            $chest = $player->getLevel()->getTile(new Vector3($shopInfo['chestX'], $shopInfo['chestY'], $shopInfo['chestZ']));
+            $itemNum = 0;
+            $pID = $shopInfo['productID'];
+            $pMeta = $shopInfo['productMeta'];
+            for ($i = 0; $i < BlockChest::SLOTS; $i++) {
+                $item = $chest->getItem($i);
+                if ($item->getID() === $pID and $item->getMetadata() === $pMeta) $itemNum += $item->getCount();
+            }
+            if ($itemNum < $shopInfo['saleNum']) {
+                $player->sendMessage("This shop is out of stock!");
+                $this->plugin->getServer()->getPlayer($shopInfo['shopOwner'])->sendMessage("Your ChestShop is out of stock! Replenish ID:${pID}!");
+                return;
+            }
+        }
     }
 
     public function onPlayerPlaceBlock(BlockPlaceEvent $event)
@@ -72,6 +116,7 @@ class EventListener implements Listener
     private function isItem($id)
     {
         if (isset(Item::$list[$id])) return true;
+        if (isset(Block::$list[$id])) return true;
         return false;
     }
 } 
