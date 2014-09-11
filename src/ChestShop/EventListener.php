@@ -49,19 +49,43 @@ class EventListener implements Listener
                 $player->sendMessage("Your money is not enough!");
                 return;
             }
+            /** @var TileChest $chest */
             $chest = $player->getLevel()->getTile(new Vector3($shopInfo['chestX'], $shopInfo['chestY'], $shopInfo['chestZ']));
             $itemNum = 0;
             $pID = $shopInfo['productID'];
             $pMeta = $shopInfo['productMeta'];
             for ($i = 0; $i < BlockChest::SLOTS; $i++) {
                 $item = $chest->getItem($i);
-                if ($item->getID() === $pID and $item->getMetadata() === $pMeta) $itemNum += $item->getCount();
+                // Use getDamage() method to get metadata of item
+                if ($item->getID() === $pID and $item->getDamage() === $pMeta) $itemNum += $item->getCount();
             }
             if ($itemNum < $shopInfo['saleNum']) {
                 $player->sendMessage("This shop is out of stock!");
-                $this->plugin->getServer()->getPlayer($shopInfo['shopOwner'])->sendMessage("Your ChestShop is out of stock! Replenish ID:${pID}!");
+                $this->plugin->getServer()->getPlayer($shopInfo['shopOwner'])->sendMessage("Your ChestShop is out of stock! Replenish ID:$pID!");
                 return;
             }
+
+            $player->getInventory()->addItem((int)Item::get($shopInfo['productID'], (int)$shopInfo['saleNum'], (int)$shopInfo['productMeta']));
+
+            $tmpNum = $shopInfo['saleNum'];
+            for ($i = 0; $i < BlockChest::SLOTS; $i++) {
+                $item = $chest->getInventory()->getItem($i);
+                // Use getDamage() method to get metadata of item
+                if ($item->getID() === $pID and $item->getDamage() === $pMeta) {
+                    if ($item->count <= $tmpNum) {
+                        $chest->getInventory()->setItem($i, Item::get(Item::AIR, 0, 0));
+                        $tmpNum -= $item->count;
+                    } else {
+                        $count = $item->count - $tmpNum;
+                        $chest->getInventory()->setItem($i, Item::get($item->getID(), $pMeta, $count));
+                        break;
+                    }
+                }
+            }
+            $this->plugin->getServer()->getPluginManager()->getPlugin("PocketMoney")->payMoney($player->getName(), $shopInfo['shopOwner'], $shopInfo['price']);
+
+            $player->sendMessage("Completed transaction");
+            $this->plugin->getServer()->getPlayer($shopInfo['shopOwner'])->sendMessage("{$player->getName()} purchased ID:$pID:$pMeta {$shopInfo['price']}PM");
         }
     }
 
