@@ -41,4 +41,14 @@ class DatabaseManager
         }
         return $this->database->query("SELECT * FROM ChestShop WHERE $where")->fetchArray(SQLITE3_ASSOC);
     }
+
+    public function deleteByCondition(array $condition)
+    {
+        $where = "";
+        foreach ($condition as $key => $val) {
+            $where .= "$key = $val";
+            $where .= " ";
+        }
+        $this->database->exec("DELETE FROM ChestShop WHERE $where");
+    }
 } 

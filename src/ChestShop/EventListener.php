@@ -29,73 +29,133 @@ class EventListener implements Listener
         $block = $event->getBlock();
         $player = $event->getPlayer();
 
-        if ($block->getID() === Block::SIGN_POST || $block->getID() === Block::WALL_SIGN) {
-            $condition = [
-                "signX" => $block->getX(),
-                "signY" => $block->getY(),
-                "signZ" => $block->getZ()
-            ];
-            if (($shopInfo = $this->databaseManager->selectByCondition($condition)) === false) return;
-            if ($shopInfo['shopOwner'] === $player->getName()) {
-                $player->sendMessage("Cannot purchase from your own shop!");
-                return;
-            }
-            $buyerMoney = $this->plugin->getServer()->getPluginManager()->getPlugin("PocketMoney")->getMoney($player->getName());
-            if ($buyerMoney instanceof SimpleError) {
-                $player->sendMessage("Couldn't get your money data!");
-                return;
-            }
-            if ($buyerMoney < $shopInfo['price']) {
-                $player->sendMessage("Your money is not enough!");
-                return;
-            }
-            /** @var TileChest $chest */
-            $chest = $player->getLevel()->getTile(new Vector3($shopInfo['chestX'], $shopInfo['chestY'], $shopInfo['chestZ']));
-            $itemNum = 0;
-            $pID = $shopInfo['productID'];
-            $pMeta = $shopInfo['productMeta'];
-            for ($i = 0; $i < BlockChest::SLOTS; $i++) {
-                $item = $chest->getItem($i);
-                // Use getDamage() method to get metadata of item
-                if ($item->getID() === $pID and $item->getDamage() === $pMeta) $itemNum += $item->getCount();
-            }
-            if ($itemNum < $shopInfo['saleNum']) {
-                $player->sendMessage("This shop is out of stock!");
-                $this->plugin->getServer()->getPlayer($shopInfo['shopOwner'])->sendMessage("Your ChestShop is out of stock! Replenish ID:$pID!");
-                return;
-            }
+        switch ($block->getID()) {
+            case Block::SIGN_POST:
+            case Block::WALL_SIGN:
+                $condition = [
+                    "signX" => $block->getX(),
+                    "signY" => $block->getY(),
+                    "signZ" => $block->getZ()
+                ];
+                if (($shopInfo = $this->databaseManager->selectByCondition($condition)) === false) return;
+                if ($shopInfo['shopOwner'] === $player->getName()) {
+                    $player->sendMessage("Cannot purchase from your own shop!");
+                    return;
+                }
+                $buyerMoney = $this->plugin->getServer()->getPluginManager()->getPlugin("PocketMoney")->getMoney($player->getName());
+                if ($buyerMoney instanceof SimpleError) {
+                    $player->sendMessage("Couldn't get your money data!");
+                    return;
+                }
+                if ($buyerMoney < $shopInfo['price']) {
+                    $player->sendMessage("Your money is not enough!");
+                    return;
+                }
+                /** @var TileChest $chest */
+                $chest = $player->getLevel()->getTile(new Vector3($shopInfo['chestX'], $shopInfo['chestY'], $shopInfo['chestZ']));
+                $itemNum = 0;
+                $pID = $shopInfo['productID'];
+                $pMeta = $shopInfo['productMeta'];
+                for ($i = 0; $i < BlockChest::SLOTS; $i++) {
+                    $item = $chest->getItem($i);
+                    // Use getDamage() method to get metadata of item
+                    if ($item->getID() === $pID and $item->getDamage() === $pMeta) $itemNum += $item->getCount();
+                }
+                if ($itemNum < $shopInfo['saleNum']) {
+                    $player->sendMessage("This shop is out of stock!");
+                    $this->plugin->getServer()->getPlayer($shopInfo['shopOwner'])->sendMessage("Your ChestShop is out of stock! Replenish ID:$pID!");
+                    return;
+                }
 
-            $player->getInventory()->addItem((int)Item::get($shopInfo['productID'], (int)$shopInfo['saleNum'], (int)$shopInfo['productMeta']));
+                $player->getInventory()->addItem((int)Item::get($shopInfo['productID'], (int)$shopInfo['saleNum'], (int)$shopInfo['productMeta']));
 
-            $tmpNum = $shopInfo['saleNum'];
-            for ($i = 0; $i < BlockChest::SLOTS; $i++) {
-                $item = $chest->getInventory()->getItem($i);
-                // Use getDamage() method to get metadata of item
-                if ($item->getID() === $pID and $item->getDamage() === $pMeta) {
-                    if ($item->count <= $tmpNum) {
-                        $chest->getInventory()->setItem($i, Item::get(Item::AIR, 0, 0));
-                        $tmpNum -= $item->count;
-                    } else {
-                        $count = $item->count - $tmpNum;
-                        $chest->getInventory()->setItem($i, Item::get($item->getID(), $pMeta, $count));
-                        break;
+                $tmpNum = $shopInfo['saleNum'];
+                for ($i = 0; $i < BlockChest::SLOTS; $i++) {
+                    $item = $chest->getInventory()->getItem($i);
+                    // Use getDamage() method to get metadata of item
+                    if ($item->getID() === $pID and $item->getDamage() === $pMeta) {
+                        if ($item->count <= $tmpNum) {
+                            $chest->getInventory()->setItem($i, Item::get(Item::AIR, 0, 0));
+                            $tmpNum -= $item->count;
+                        } else {
+                            $count = $item->count - $tmpNum;
+                            $chest->getInventory()->setItem($i, Item::get($item->getID(), $pMeta, $count));
+                            break;
+                        }
                     }
                 }
-            }
-            $this->plugin->getServer()->getPluginManager()->getPlugin("PocketMoney")->payMoney($player->getName(), $shopInfo['shopOwner'], $shopInfo['price']);
+                $this->plugin->getServer()->getPluginManager()->getPlugin("PocketMoney")->payMoney($player->getName(), $shopInfo['shopOwner'], $shopInfo['price']);
 
-            $player->sendMessage("Completed transaction");
-            $this->plugin->getServer()->getPlayer($shopInfo['shopOwner'])->sendMessage("{$player->getName()} purchased ID:$pID:$pMeta {$shopInfo['price']}PM");
+                $player->sendMessage("Completed transaction");
+                $this->plugin->getServer()->getPlayer($shopInfo['shopOwner'])->sendMessage("{$player->getName()} purchased ID:$pID:$pMeta {$shopInfo['price']}PM");
+                break;
+
+            case Block::CHEST:
+                $condition = [
+                    "chestX" => $block->getX(),
+                    "chestY" => $block->getY(),
+                    "chestZ" => $block->getZ()
+                ];
+                $shopInfo = $this->databaseManager->selectByCondition($condition);
+                if ($shopInfo !== false) {
+                    if ($shopInfo['shopOwner'] !== $player->getName()) {
+                        $player->sendMessage("This chest has been protected!");
+                        $event->setCancelled();
+                    }
+                }
+                break;
+
+            default:
+                break;
         }
     }
 
     public function onPlayerPlaceBlock(BlockPlaceEvent $event)
     {
-        $item = $event->getItem();
-        $this->plugin->getLogger()->info($item->getID());
-        if ($item->getID() === Block::SIGN_POST || $item->getID() === Block::WALL_SIGN) {
+        $block = $event->getBlockAgainst();
+        $player = $event->getPlayer();
+
+        switch ($block->getID()) {
+            case Block::SIGN_POST:
+            case Block::WALL_SIGN:
+                $condition = [
+                    "signX" => $block->getX(),
+                    "signY" => $block->getY(),
+                    "signZ" => $block->getZ()
+                ];
+                $shopInfo = $this->databaseManager->selectByCondition($condition);
+                if ($shopInfo !== false) {
+                    if ($shopInfo['shopOwner'] !== $player->getName()) {
+                        $player->sendMessage("This sign has been protected!");
+                        $event->setCancelled();
+                    } else {
+                        $this->databaseManager->deleteByCondition($condition);
+                        $player->sendMessage("Closed your ChestShop");
+                    }
+                }
+                break;
+
+            case Block::CHEST:
+                $condition = [
+                    "chestX" => $block->getX(),
+                    "chestY" => $block->getY(),
+                    "chestZ" => $block->getZ()
+                ];
+                $shopInfo = $this->databaseManager->selectByCondition($condition);
+                if ($shopInfo !== false) {
+                    if ($shopInfo['shopOwner'] !== $player->getName()) {
+                        $player->sendMessage("This chest has been protected!");
+                        $event->setCancelled();
+                    } else {
+                        $this->databaseManager->deleteByCondition($condition);
+                        $player->sendMessage("Closed your ChestShop");
+                    }
+                }
+                break;
+
+            default:
+                break;
         }
-        return true;
     }
 
     public function onSignChange(SignChangeEvent $event)
