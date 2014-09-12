@@ -2,6 +2,7 @@
 
 namespace ChestShop;
 
+use pocketmine\event\block\BlockBreakEvent;
 use pocketmine\event\block\BlockPlaceEvent;
 use pocketmine\event\block\SignChangeEvent;
 use pocketmine\event\Listener;
@@ -18,10 +19,10 @@ class EventListener implements Listener
     private $plugin;
     private $databaseManager;
 
-    public function __construct(ChestShop $plugin, DatabaseManager $dbm)
+    public function __construct(ChestShop $plugin, DatabaseManager $databaseManager)
     {
         $this->plugin = $plugin;
-        $this->databaseManager = $dbm;
+        $this->databaseManager = $databaseManager;
     }
 
     public function onPlayerInteract(PlayerInteractEvent $event)
@@ -32,18 +33,17 @@ class EventListener implements Listener
         switch ($block->getID()) {
             case Block::SIGN_POST:
             case Block::WALL_SIGN:
-                $condition = [
-                    "signX" => $block->getX(),
-                    "signY" => $block->getY(),
-                    "signZ" => $block->getZ()
-                ];
-                if (($shopInfo = $this->databaseManager->selectByCondition($condition)) === false) return;
+                if (($shopInfo = $this->databaseManager->selectByCondition([
+                        "signX" => $block->getX(),
+                        "signY" => $block->getY(),
+                        "signZ" => $block->getZ()
+                    ])) === false) return;
                 if ($shopInfo['shopOwner'] === $player->getName()) {
                     $player->sendMessage("Cannot purchase from your own shop!");
                     return;
                 }
                 $buyerMoney = $this->plugin->getServer()->getPluginManager()->getPlugin("PocketMoney")->getMoney($player->getName());
-                if ($buyerMoney instanceof SimpleError) {
+                if (!is_numeric($buyerMoney)) { // Probably $buyerMoney is instance of SimpleError
                     $player->sendMessage("Couldn't get your money data!");
                     return;
                 }
@@ -58,7 +58,7 @@ class EventListener implements Listener
                 $pMeta = $shopInfo['productMeta'];
                 for ($i = 0; $i < BlockChest::SLOTS; $i++) {
                     $item = $chest->getItem($i);
-                    // Use getDamage() method to get metadata of item
+                    // use getDamage() method to get metadata of item
                     if ($item->getID() === $pID and $item->getDamage() === $pMeta) $itemNum += $item->getCount();
                 }
                 if ($itemNum < $shopInfo['saleNum']) {
@@ -74,12 +74,11 @@ class EventListener implements Listener
                     $item = $chest->getInventory()->getItem($i);
                     // Use getDamage() method to get metadata of item
                     if ($item->getID() === $pID and $item->getDamage() === $pMeta) {
-                        if ($item->count <= $tmpNum) {
+                        if ($item->getCount() <= $tmpNum) {
                             $chest->getInventory()->setItem($i, Item::get(Item::AIR, 0, 0));
-                            $tmpNum -= $item->count;
+                            $tmpNum -= $item->getCount();
                         } else {
-                            $count = $item->count - $tmpNum;
-                            $chest->getInventory()->setItem($i, Item::get($item->getID(), $pMeta, $count));
+                            $chest->getInventory()->setItem($i, Item::get($item->getID(), $pMeta, $item->getCount() - $tmpNum));
                             break;
                         }
                     }
@@ -91,17 +90,14 @@ class EventListener implements Listener
                 break;
 
             case Block::CHEST:
-                $condition = [
+                $shopInfo = $this->databaseManager->selectByCondition([
                     "chestX" => $block->getX(),
                     "chestY" => $block->getY(),
                     "chestZ" => $block->getZ()
-                ];
-                $shopInfo = $this->databaseManager->selectByCondition($condition);
-                if ($shopInfo !== false) {
-                    if ($shopInfo['shopOwner'] !== $player->getName()) {
-                        $player->sendMessage("This chest has been protected!");
-                        $event->setCancelled();
-                    }
+                ]);
+                if ($shopInfo !== false && $shopInfo['shopOwner'] !== $player->getName()) {
+                    $player->sendMessage("This chest has been protected!");
+                    $event->setCancelled();
                 }
                 break;
 
@@ -110,9 +106,9 @@ class EventListener implements Listener
         }
     }
 
-    public function onPlayerPlaceBlock(BlockPlaceEvent $event)
+    public function onPlayerBreakBlock(BlockBreakEvent $event)
     {
-        $block = $event->getBlockAgainst();
+        $block = $event->getBlock();
         $player = $event->getPlayer();
 
         switch ($block->getID()) {
@@ -169,11 +165,12 @@ class EventListener implements Listener
 
         $sign = $event->getBlock();
 
+        // Check sign format...
         if ($event->getLine(0) !== "") return;
         if (!is_numeric($saleNum) or $saleNum <= 0) return;
         if (!is_numeric($price) or $price < 0) return;
         if ($pID === false) return;
-        if ($chest = $this->getSideChest($sign)) return;
+        if (($chest = $this->getSideChest($sign)) === false) return;
 
         $productName = isset(Block::$list[$pID]) ? Block::$list[$pID]->getName() : Item::$list[$pID]->getName();
         $event->setLine(0, $shopOwner);

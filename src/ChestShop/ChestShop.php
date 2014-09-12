@@ -35,8 +35,8 @@ class ChestShop extends PluginBase
                 $constants = array_keys((new \ReflectionClass("pocketmine\\item\\Item"))->getConstants());
                 foreach ($constants as $constant) {
                     if (stripos($constant, $name) !== false) {
-                        $constant = str_replace("_", " ", $constant);
                         $id = constant("pocketmine\\item\\Item::$constant");
+                        $constant = str_replace("_", " ", $constant);
                         $sender->sendMessage("ID:$id $constant");
                     }
                 }
