@@ -171,7 +171,7 @@ class EventListener implements Listener
         if ($pID === false) return;
         if (($chest = $this->getSideChest($sign)) === false) return;
 
-        $productName = isset(Block::$list[$pID]) ? Block::$list[$pID]->getName() : Item::$list[$pID]->getName();
+        $productName = Block::get($pID)->getName();
         $event->setLine(0, $shopOwner);
         $event->setLine(1, "Amount:$saleNum");
         $event->setLine(2, "Price:$price");

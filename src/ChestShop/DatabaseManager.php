@@ -52,7 +52,7 @@ class DatabaseManager
     public function selectByCondition(array $condition)
     {
         $where = $this->formatCondition($condition);
-        return $this->database->query("SELECT * FROM ChestShop WHERE $where")->fetchArray(SQLITE3_ASSOC);
+        return ($res = $this->database->query("SELECT * FROM ChestShop WHERE $where")) === false ? false : $res->fetchArray(SQLITE3_ASSOC);
     }
 
     /**
@@ -68,9 +68,11 @@ class DatabaseManager
     private function formatCondition(array $condition)
     {
         $result = "";
+        $first = true;
         foreach ($condition as $key => $val) {
-            $result .= "$key = $val";
-            $result .= " ";
+            if ($first) $first = false;
+            else $result .= "AND ";
+            $result .= "$key = $val ";
         }
         return trim($result);
     }

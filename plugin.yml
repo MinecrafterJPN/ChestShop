@@ -7,8 +7,8 @@ author: MinecrafterJPN
 authors: [MinecrafterJPN]
 description: Open your ChestShop
 website: https://github.com/MinecrafterJPN/ChestShop
-#depend:
-# - PocketMoney
+depend:
+ - PocketMoney
 commands:
  id:
   description: Search item ID
