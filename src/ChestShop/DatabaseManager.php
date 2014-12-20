@@ -8,6 +8,9 @@ class DatabaseManager
 {
     private $database;
 
+    /**
+     * @param string $path
+     */
     public function __construct($path)
     {
         $this->database = new \SQLite3($path);

@@ -43,7 +43,7 @@ class EventListener implements Listener
                 }
                 $buyerMoney = $this->plugin->getServer()->getPluginManager()->getPlugin("PocketMoney")->getMoney($player->getName());
                 if (!is_numeric($buyerMoney)) { // Probably $buyerMoney is instance of SimpleError
-                    $player->sendMessage("Couldn't get your money data!");
+                    $player->sendMessage("Couldn't acquire your money data!");
                     return;
                 }
                 if ($buyerMoney < $shopInfo['price']) {
@@ -56,7 +56,7 @@ class EventListener implements Listener
                 $pID = $shopInfo['productID'];
                 $pMeta = $shopInfo['productMeta'];
                 for ($i = 0; $i < BlockChest::SLOTS; $i++) {
-                    $item = $chest->getItem($i);
+                    $item = $chest->getInventory()->getItem($i);
                     // use getDamage() method to get metadata of item
                     if ($item->getID() === $pID and $item->getDamage() === $pMeta) $itemNum += $item->getCount();
                 }
@@ -68,7 +68,8 @@ class EventListener implements Listener
                     return;
                 }
 
-                $player->getInventory()->addItem((int)Item::get($shopInfo['productID'], (int)$shopInfo['saleNum'], (int)$shopInfo['productMeta']));
+                //TODO Improve this
+                $player->getInventory()->addItem(clone Item::get((int)$shopInfo['productID'], (int)$shopInfo['productMeta'], (int)$shopInfo['saleNum']));
 
                 $tmpNum = $shopInfo['saleNum'];
                 for ($i = 0; $i < BlockChest::SLOTS; $i++) {
@@ -87,7 +88,9 @@ class EventListener implements Listener
                 $this->plugin->getServer()->getPluginManager()->getPlugin("PocketMoney")->payMoney($player->getName(), $shopInfo['shopOwner'], $shopInfo['price']);
 
                 $player->sendMessage("Completed transaction");
-                $this->plugin->getServer()->getPlayer($shopInfo['shopOwner'])->sendMessage("{$player->getName()} purchased ID:$pID:$pMeta {$shopInfo['price']}PM");
+                if (($p = $this->plugin->getServer()->getPlayer($shopInfo['shopOwner'])) !== null) {
+                    $p->sendMessage("{$player->getName()} purchased ID:$pID:$pMeta {$shopInfo['price']}PM");
+                }
                 break;
 
             case Block::CHEST:
