@@ -1,11 +1,5 @@
 <?php
 
-/**
- * ChestShop
- * @version 2.0.0
- * @author MinecrafterJPN
- */
-
 namespace ChestShop;
 
 use pocketmine\plugin\PluginBase;
