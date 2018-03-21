@@ -1,0 +1,6 @@
+--- # Poggit-CI Manifest. Open the CI at https://poggit.pmmp.io/ci/poggit-orphanage/ChestShop
+projects:
+  ChestShop:
+    path: ""
+    icon: "icon.png"
+...
