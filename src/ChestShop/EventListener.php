@@ -2,12 +2,13 @@
 
 namespace ChestShop;
 
+use pocketmine\block\Block;
 use pocketmine\event\block\BlockBreakEvent;
 use pocketmine\event\block\SignChangeEvent;
 use pocketmine\event\Listener;
-use pocketmine\block\Block;
 use pocketmine\event\player\PlayerInteractEvent;
 use pocketmine\item\Item;
+use pocketmine\item\ItemFactory;
 use pocketmine\level\Position;
 use pocketmine\math\Vector3;
 use pocketmine\tile\Chest as TileChest;
@@ -67,23 +68,9 @@ class EventListener implements Listener
                     return;
                 }
 
-                //TODO Improve this
-                $player->getInventory()->addItem(clone Item::get((int)$shopInfo['productID'], (int)$shopInfo['productMeta'], (int)$shopInfo['saleNum']));
-
-                $tmpNum = $shopInfo['saleNum'];
-                for ($i = 0; $i < $chest->getSize(); $i++) {
-                    $item = $chest->getInventory()->getItem($i);
-                    // Use getDamage() method to get metadata of item
-                    if ($item->getID() === $pID and $item->getDamage() === $pMeta) {
-                        if ($item->getCount() <= $tmpNum) {
-                            $chest->getInventory()->setItem($i, Item::get(Item::AIR, 0, 0));
-                            $tmpNum -= $item->getCount();
-                        } else {
-                            $chest->getInventory()->setItem($i, Item::get($item->getID(), $pMeta, $item->getCount() - $tmpNum));
-                            break;
-                        }
-                    }
-                }
+                $item = Item::get((int)$shopInfo['productID'], (int)$shopInfo['productMeta'], (int)$shopInfo['saleNum']);
+                $chest->getInventory()->removeItem($item);
+                $player->getInventory()->addItem($item);
                 $this->plugin->getServer()->getPluginManager()->getPlugin("PocketMoney")->payMoney($player->getName(), $shopInfo['shopOwner'], $shopInfo['price']);
 
                 $player->sendMessage("Completed transaction");
@@ -151,9 +138,6 @@ class EventListener implements Listener
                     }
                 }
                 break;
-
-            default:
-                break;
         }
     }
 
@@ -199,8 +183,6 @@ class EventListener implements Listener
 
     private function isItem($id)
     {
-        if (isset(Item::$list[$id])) return true;
-        if (isset(Block::$list[$id])) return true;
-        return false;
+        return ItemFactory::isRegistered((int) $id);
     }
 } 

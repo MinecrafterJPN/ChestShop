@@ -2,35 +2,28 @@
 
 namespace ChestShop;
 
-use pocketmine\plugin\PluginBase;
 use pocketmine\command\Command;
 use pocketmine\command\CommandSender;
+use pocketmine\item\ItemIds;
+use pocketmine\plugin\PluginBase;
 
 class ChestShop extends PluginBase
 {
-    public function onLoad()
-    {
-    }
-
     public function onEnable()
     {
-        if (!file_exists($this->getDataFolder())) @mkdir($this->getDataFolder());
+        @mkdir($this->getDataFolder());
         $this->getServer()->getPluginManager()->registerEvents(new EventListener($this, new DatabaseManager($this->getDataFolder() . 'ChestShop.sqlite3')), $this);
     }
 
-    public function onDisable()
-    {
-    }
-
-    public function onCommand(CommandSender $sender, Command $command, $label, array $args)
+    public function onCommand(CommandSender $sender, Command $command, $label, array $args): bool
     {
         switch ($command->getName()) {
             case "id":
                 $name = array_shift($args);
-                $constants = array_keys((new \ReflectionClass("pocketmine\\item\\Item"))->getConstants());
+                $constants = array_keys((new \ReflectionClass(ItemIds::class))->getConstants());
                 foreach ($constants as $constant) {
                     if (stripos($constant, $name) !== false) {
-                        $id = constant("pocketmine\\item\\Item::$constant");
+                        $id = constant(ItemIds::class."::$constant");
                         $constant = str_replace("_", " ", $constant);
                         $sender->sendMessage("ID:$id $constant");
                     }

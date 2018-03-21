@@ -1,10 +1,9 @@
 name: ChestShop
 main: ChestShop\ChestShop
-version: 2.0.1
-api: [1.10.0]
+version: 2.1.0
+api: [3.0.0-ALPHA11]
 load: POSTWORLD
 author: MinecrafterJPN
-authors: [MinecrafterJPN]
 description: Open your ChestShop
 website: https://github.com/MinecrafterJPN/ChestShop
 depend:
@@ -12,12 +11,8 @@ depend:
 commands:
  id:
   description: Search item ID
-  usage: "Usage: /id <itemname>"
+  usage: "/id <itemname>"
   permission: chestshop.command.id
- remove:
-  description: Remove the player's ChestShop
-  usage: "Usage: /remove <username>"
-  permission: chestshop.command.remove
 permissions:
  chestshop:
   default: op
@@ -30,6 +25,3 @@ permissions:
      chestshop.command.id:
       default: true
       description: "Allows searching item ID"
-     chestshop.command.remove:
-      default: op
-      description: "Allows removing player's ChestShop"
