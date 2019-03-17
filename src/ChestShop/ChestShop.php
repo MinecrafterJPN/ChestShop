@@ -1,5 +1,5 @@
 <?php
-
+declare(strict_types=1);
 namespace ChestShop;
 
 use pocketmine\command\Command;
@@ -11,7 +11,6 @@ class ChestShop extends PluginBase
 {
     public function onEnable()
     {
-        @mkdir($this->getDataFolder());
         $this->getServer()->getPluginManager()->registerEvents(new EventListener($this, new DatabaseManager($this->getDataFolder() . 'ChestShop.sqlite3')), $this);
     }
 

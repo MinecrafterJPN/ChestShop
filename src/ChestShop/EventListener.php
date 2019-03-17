@@ -1,5 +1,5 @@
 <?php
-
+declare(strict_types=1);
 namespace ChestShop;
 
 use pocketmine\block\Block;
@@ -11,7 +11,7 @@ use pocketmine\item\Item;
 use pocketmine\item\ItemFactory;
 use pocketmine\level\Position;
 use pocketmine\math\Vector3;
-use pocketmine\tile\Chest as TileChest;
+use pocketmine\tile\Chest;
 
 class EventListener implements Listener
 {
@@ -50,12 +50,12 @@ class EventListener implements Listener
                     $player->sendMessage("Your money is not enough!");
                     return;
                 }
-                /** @var TileChest $chest */
+                /** @var Chest $chest */
                 $chest = $player->getLevel()->getTile(new Vector3($shopInfo['chestX'], $shopInfo['chestY'], $shopInfo['chestZ']));
                 $itemNum = 0;
                 $pID = $shopInfo['productID'];
                 $pMeta = $shopInfo['productMeta'];
-                for ($i = 0; $i < $chest->getSize(); $i++) {
+                for ($i = 0; $i < $chest->getInventory()->getSize(); $i++) {
                     $item = $chest->getInventory()->getItem($i);
                     // use getDamage() method to get metadata of item
                     if ($item->getID() === $pID and $item->getDamage() === $pMeta) $itemNum += $item->getCount();
@@ -147,7 +147,8 @@ class EventListener implements Listener
         $saleNum = $event->getLine(1);
         $price = $event->getLine(2);
         $productData = explode(":", $event->getLine(3));
-        $pID = $this->isItem($id = array_shift($productData)) ? $id : false;
+        /** @var int|bool $pID */
+        $pID = $this->isItem($id = array_shift($productData)) ? (int)$id : false;
         $pMeta = ($meta = array_shift($productData)) ? $meta : 0;
 
         $sign = $event->getBlock();

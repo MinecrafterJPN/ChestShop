@@ -1,5 +1,5 @@
 <?php
-
+declare(strict_types=1);
 namespace ChestShop;
 
 use pocketmine\block\Block;
@@ -43,7 +43,7 @@ class DatabaseManager
      * @param Block $chest
      * @return bool
      */
-    public function registerShop($shopOwner, $saleNum, $price, $productID, $productMeta, $sign, $chest)
+    public function registerShop($shopOwner, $saleNum, $price, $productID, $productMeta, $sign, $chest) : bool
     {
         return $this->database->exec("INSERT INTO ChestShop (shopOwner, saleNum, price, productID, productMeta, signX, signY, signZ, chestX, chestY, chestZ) VALUES ('$shopOwner', $saleNum, $price, $productID, $productMeta, $sign->x, $sign->y, $sign->z, $chest->x, $chest->y, $chest->z)");
     }
@@ -62,13 +62,13 @@ class DatabaseManager
      * @param array $condition
      * @return bool
      */
-    public function deleteByCondition(array $condition)
+    public function deleteByCondition(array $condition) : bool
     {
         $where = $this->formatCondition($condition);
         return $this->database->exec("DELETE FROM ChestShop WHERE $where");
     }
 
-    private function formatCondition(array $condition)
+    private function formatCondition(array $condition) : string
     {
         $result = "";
         $first = true;
