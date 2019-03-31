@@ -40,6 +40,8 @@ class EventListener implements Listener
                 if ($shopInfo['shopOwner'] === $player->getName()) {
                     $player->sendMessage("Cannot purchase from your own shop!");
                     return;
+                }else{
+                	$event->setCancelled();
                 }
                 $buyerMoney = EconomyAPI::getInstance()->myMoney($player->getName());
                 if ($buyerMoney === false) {
