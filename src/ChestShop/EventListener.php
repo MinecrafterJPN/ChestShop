@@ -42,7 +42,7 @@ class EventListener implements Listener
                     return;
                 }
                 $buyerMoney = EconomyAPI::getInstance()->myMoney($player->getName());
-                if ($buyerMoney !== false) {
+                if ($buyerMoney === false) {
                     $player->sendMessage("Couldn't acquire your money data!");
                     return;
                 }
