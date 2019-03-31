@@ -8,6 +8,8 @@ description: A PocketMine-MP plugin which enables you to open a chest shop using
 website: https://github.com/poggit-orphanage/ChestShop
 depend:
  - PocketMoney
+extensions:
+ - sqlite3
 commands:
  id:
   description: Search item ID
