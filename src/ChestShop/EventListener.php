@@ -63,7 +63,7 @@ class EventListener implements Listener
                 if ($itemNum < $shopInfo['saleNum']) {
                     $player->sendMessage("This shop is out of stock!");
                     if (($p = $this->plugin->getServer()->getPlayer($shopInfo['shopOwner'])) !== null) {
-                        $p->sendMessage("Your ChestShop is out of stock! Replenish ID:$pID!");
+                        $p->sendMessage("Your ChestShop is out of stock! Replenish Item: ".ItemFactory::get($pID, $pMeta)->getName());
                     }
                     return;
                 }
@@ -77,7 +77,7 @@ class EventListener implements Listener
 
                 $player->sendMessage("Completed transaction");
                 if (($p = $this->plugin->getServer()->getPlayer($shopInfo['shopOwner'])) !== null) {
-                    $p->sendMessage("{$player->getName()} purchased ID:$pID:$pMeta ".EconomyAPI::getInstance()->getMonetaryUnit().$shopInfo['price']);
+                    $p->sendMessage("{$player->getName()} purchased ".ItemFactory::get($pID, $pMeta)->getName()." for ".EconomyAPI::getInstance()->getMonetaryUnit().$shopInfo['price']);
                 }
                 break;
 
@@ -162,11 +162,11 @@ class EventListener implements Listener
         if ($pID === false) return;
         if (($chest = $this->getSideChest($sign)) === false) return;
 
-        $productName = Block::get($pID)->getName();
+        $productName = Block::get($pID, $pMeta)->getName();
         $event->setLine(0, $shopOwner);
-        $event->setLine(1, "Amount:$saleNum");
-        $event->setLine(2, "Price:$price");
-        $event->setLine(3, "$productName:$pMeta");
+        $event->setLine(1, "Amount: $saleNum");
+        $event->setLine(2, "Price: ".EconomyAPI::getInstance()->getMonetaryUnit().$price);
+        $event->setLine(3, $productName);
 
         $this->databaseManager->registerShop($shopOwner, $saleNum, $price, $pID, $pMeta, $sign, $chest);
     }
@@ -177,6 +177,8 @@ class EventListener implements Listener
         if ($block->getID() === Block::CHEST) return $block;
         $block = $pos->getLevel()->getBlock(new Vector3($pos->getX() - 1, $pos->getY(), $pos->getZ()));
         if ($block->getID() === Block::CHEST) return $block;
+	    $block = $pos->getLevel()->getBlock(new Vector3($pos->getX(), $pos->getY() - 1, $pos->getZ()));
+	    if ($block->getID() === Block::CHEST) return $block;
         $block = $pos->getLevel()->getBlock(new Vector3($pos->getX(), $pos->getY(), $pos->getZ() + 1));
         if ($block->getID() === Block::CHEST) return $block;
         $block = $pos->getLevel()->getBlock(new Vector3($pos->getX(), $pos->getY(), $pos->getZ() - 1));

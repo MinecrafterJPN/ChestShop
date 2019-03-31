@@ -1,6 +1,6 @@
 name: ChestShop
 main: ChestShop\ChestShop
-version: 2.1.1
+version: 2.2.0
 api: [3.0.0]
 load: POSTWORLD
 author: MinecrafterJPN
