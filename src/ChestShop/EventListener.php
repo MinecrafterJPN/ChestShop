@@ -162,7 +162,7 @@ class EventListener implements Listener
         if ($pID === false) return;
         if (($chest = $this->getSideChest($sign)) === false) return;
 
-        $productName = Block::get($pID, $pMeta)->getName();
+        $productName = ItemFactory::get($pID, $pMeta)->getName();
         $event->setLine(0, $shopOwner);
         $event->setLine(1, "Amount: $saleNum");
         $event->setLine(2, "Price: ".EconomyAPI::getInstance()->getMonetaryUnit().$price);
