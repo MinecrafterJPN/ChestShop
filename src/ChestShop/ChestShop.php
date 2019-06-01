@@ -14,7 +14,7 @@ class ChestShop extends PluginBase
         $this->getServer()->getPluginManager()->registerEvents(new EventListener($this, new DatabaseManager($this->getDataFolder() . 'ChestShop.sqlite3')), $this);
     }
 
-    public function onCommand(CommandSender $sender, Command $command, $label, array $args): bool
+    public function onCommand(CommandSender $sender, Command $command, string $label, array $args): bool
     {
         switch ($command->getName()) {
             case "id":
@@ -34,13 +34,3 @@ class ChestShop extends PluginBase
         }
     }
 }
-
-
-
-
-
-
-
-
-
-
